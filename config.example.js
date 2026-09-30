@@ -1,1 +1,5 @@
-window.CREATOR_VAULT_CONFIG={supabaseUrl:"",supabaseAnonKey:"",razorpayKeyId:""};
+window.CREATOR_VAULT_CONFIG = {
+  supabaseUrl: "https://bxymvojjjdqgnrmrjimr.supabase.co",
+  supabasePublishableKey: "sb_publishable_Vnkq5ZrT9uYzSOq8YOfxIA_xci6qHkU",
+  razorpayKeyId: ""
+};
