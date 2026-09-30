@@ -1,0 +1,1 @@
+window.CREATOR_VAULT_CONFIG={supabaseUrl:"",supabaseAnonKey:"",razorpayKeyId:""};
