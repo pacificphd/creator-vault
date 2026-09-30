@@ -54,6 +54,17 @@ async function googleLogin(){
  if(error)document.getElementById('accountStatus').textContent='Google login needs provider setup: '+error.message;
 }
 async function logout(){if(db){await db.auth.signOut();location.reload()}}
+async function secureDownload(productId){
+ if(!db)return;
+ const {data:{session}}=await db.auth.getSession();
+ if(!session){alert('Please login first.');return}
+ try{
+  const res=await fetch('/.netlify/functions/download',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({productId})});
+  const out=await res.json();
+  if(!res.ok)throw new Error(out.error||'Download unavailable');
+  location.href=out.url;
+ }catch(e){alert(e.message)}
+}
 async function loadDownloads(){
  if(!db)return;
  const {data:{user}}=await db.auth.getUser();
@@ -61,7 +72,7 @@ async function loadDownloads(){
  if(!user){box.innerHTML='<div class="downloadCard"><b>Login required</b><p>Sign in to view products owned by your account.</p></div>';return}
  const {data,error}=await db.from('purchases').select('granted_at,products(id,name,description)').eq('user_id',user.id);
  if(error||!data?.length){box.innerHTML='<div class="downloadCard"><b>No purchased products yet</b><p>Your verified purchases will appear here automatically.</p></div>';return}
- box.innerHTML=data.map(x=>'<div class="downloadCard"><b>'+x.products.name+'</b><p>'+ (x.products.description||'Purchased digital asset') +'</p><button class="btn dark" disabled>Secure download available after file service setup</button></div>').join('');
+ box.innerHTML=data.map(x=>'<div class="downloadCard"><b>'+x.products.name+'</b><p>'+ (x.products.description||'Purchased digital asset') +'</p><button class="btn dark" onclick="secureDownload(\''+x.products.id+'\')">Secure Download</button></div>').join('');
 }function openDownloads(){document.getElementById('downloadsModal').classList.add('on');loadDownloads()}function closeDownloads(){document.getElementById('downloadsModal').classList.remove('on')}let heroIndex=0,heroTimer;function heroGo(i){heroIndex=(i+3)%3;document.getElementById('heroTrack').style.transform=`translateX(-${heroIndex*100}%)`;document.querySelectorAll('.dot').forEach((d,n)=>d.classList.toggle('on',n===heroIndex));clearInterval(heroTimer);heroTimer=setInterval(()=>heroGo(heroIndex+1),4500)}function heroMove(d){heroGo(heroIndex+d)}heroTimer=setInterval(()=>heroGo(heroIndex+1),4500);render();count();renderCart();loadStore();refreshSession();
 </script><!-- netlify-deploy-trigger: public-repo -->
 </body></html>
