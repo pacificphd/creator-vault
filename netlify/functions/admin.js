@@ -67,15 +67,15 @@ exports.handler=async(event)=>{
    return out(200,{products:p.count||0,orders:o.count||0,downloads:d.count||0});
   }
   if(action==='customers.list'){
-   const {data:orders,error:e}=await supabase.from('purchases').select('user_id,created_at');if(e)return out(400,{error:e.message});
+   const {data:orders,error:e}=await supabase.from('purchases').select('user_id,granted_at');if(e)return out(400,{error:e.message});
    const {data:users,error:ue}=await supabase.auth.admin.listUsers({page:1,perPage:1000});if(ue)return out(400,{error:ue.message});
    const byUser={};
-   for(const o of orders||[]){if(!byUser[o.user_id])byUser[o.user_id]={orders:0,last_purchase:null};byUser[o.user_id].orders++;if(!byUser[o.user_id].last_purchase||o.created_at>byUser[o.user_id].last_purchase)byUser[o.user_id].last_purchase=o.created_at}
+   for(const o of orders||[]){if(!byUser[o.user_id])byUser[o.user_id]={orders:0,last_purchase:null};byUser[o.user_id].orders++;if(!byUser[o.user_id].last_purchase||o.granted_at>byUser[o.user_id].last_purchase)byUser[o.user_id].last_purchase=o.granted_at}
    const customers=Object.keys(byUser).map(id=>{const u=(users.users||[]).find(v=>v.id===id);return{id,email:u&&u.email?u.email:'Unknown',orders:byUser[id].orders,last_purchase:byUser[id].last_purchase}});
    return out(200,{customers});
   }
   if(action==='orders.list'){
-   const {data,error:e}=await supabase.from('purchases').select('*').order('created_at',{ascending:false}).limit(100);if(e)return out(400,{error:e.message});return out(200,{orders:data});
+   const {data,error:e}=await supabase.from('purchases').select('*').order('granted_at',{ascending:false}).limit(100);if(e)return out(400,{error:e.message});return out(200,{orders:data});
   }
   return out(400,{error:'Unknown action'});
  }catch(e){return out(500,{error:'Admin operation failed'})}
