@@ -37,6 +37,14 @@ exports.handler=async(event)=>{
    const {data,error:e}=await supabase.from('store_settings').upsert({key:body.key,value:String(body.value??'')},{onConflict:'key'}).select().single();
    if(e)return out(400,{error:e.message});return out(200,{setting:data});
   }
+  if(action==='analytics.summary'){
+   const [p,o,d]=await Promise.all([
+    supabase.from('products').select('id',{count:'exact',head:true}),
+    supabase.from('purchases').select('id',{count:'exact',head:true}),
+    supabase.from('download_events').select('id',{count:'exact',head:true})
+   ]);
+   return out(200,{products:p.count||0,orders:o.count||0,downloads:d.count||0});
+  }
   if(action==='orders.list'){
    const {data,error:e}=await supabase.from('purchases').select('*').order('created_at',{ascending:false}).limit(100);if(e)return out(400,{error:e.message});return out(200,{orders:data});
   }
