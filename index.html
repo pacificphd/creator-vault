@@ -55,7 +55,7 @@ async function adminTab(tab){
  if(tab==='products'){
   const {data,error}=await db.from('products').select('id,name,price,compare_price,active,slug').order('created_at',{ascending:false});
   if(error){el.innerHTML='<p>Admin access is not authorized for this account.</p>';return}
-  el.innerHTML='<div class="adminForm"><input class="field wide" id="apName" placeholder="Product name"><input class="field" id="apPrice" type="number" placeholder="Price"><input class="field" id="apOld" type="number" placeholder="Compare price"><input class="field wide" id="apSlug" placeholder="product-slug"><textarea class="field wide" id="apDesc" placeholder="Description"></textarea><button class="btn dark wide" onclick="adminCreateProduct()">Add Product</button></div><h3>Products</h3><table class="adminTable"><tr><th>Name</th><th>Price</th><th>Status</th></tr>'+((data||[]).map(p=>'<tr><td>'+p.name+'</td><td>'+money(p.price)+'</td><td>'+(p.active?'Active':'Hidden')+'</td></tr>').join('')||'<tr><td colspan="3">No products</td></tr>')+'</table>';
+  el.innerHTML='<div class="adminForm"><input class="field wide" id="apName" placeholder="Product name"><input class="field" id="apPrice" type="number" placeholder="Price"><input class="field" id="apOld" type="number" placeholder="Compare price"><input class="field wide" id="apSlug" placeholder="product-slug"><textarea class="field wide" id="apDesc" placeholder="Description"></textarea><button class="btn dark wide" onclick="adminCreateProduct()">Add Product</button></div><h3>Products</h3><table class="adminTable"><tr><th>Name</th><th>Price</th><th>Status</th></tr>'+((data||[]).map(p=>'<tr><td>'+p.name+'</td><td>'+money(p.price)+'</td><td><button class="outline" onclick="adminToggleProduct(\''+p.id+'\','+(!p.active)+')">'+(p.active?'Hide':'Activate')+'</button></td></tr>').join('')||'<tr><td colspan="3">No products</td></tr>')+'</table>';
  }else if(tab==='orders'){
   const {data,error}=await db.from('purchases').select('id,created_at,user_id,product_id').order('created_at',{ascending:false}).limit(50);
   el.innerHTML=error?'<p>Orders require admin authorization.</p>':'<h3>Recent purchases</h3><table class="adminTable"><tr><th>Date</th><th>Product</th><th>User</th></tr>'+((data||[]).map(o=>'<tr><td>'+new Date(o.created_at).toLocaleDateString()+'</td><td>'+o.product_id+'</td><td>'+o.user_id+'</td></tr>').join('')||'<tr><td colspan="3">No purchases yet</td></tr>')+'</table>';
@@ -65,12 +65,18 @@ async function adminTab(tab){
   el.innerHTML=error?'<p>Customer data requires admin authorization.</p>':'<h3>Customers</h3><p>'+ids.length+' purchasing customer(s) recorded.</p>';
  }
 }
+async function adminApi(action,payload={}){
+ const {data}=await db.auth.getSession();const token=data?.session?.access_token;if(!token)throw new Error('Login required');
+ const r=await fetch('/.netlify/functions/admin',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({action,...payload})});
+ const j=await r.json();if(!r.ok)throw new Error(j.error||'Admin request failed');return j;
+}
 async function adminCreateProduct(){
  const name=document.getElementById('apName').value.trim(),slug=document.getElementById('apSlug').value.trim(),price=Number(document.getElementById('apPrice').value||0);
  if(!name||!slug||!price){alert('Name, slug and price are required.');return}
- const {error}=await db.from('products').insert({name,slug,price,compare_price:Number(document.getElementById('apOld').value||price),description:document.getElementById('apDesc').value.trim(),active:true});
- if(error){alert('Admin authorization required: '+error.message);return} adminTab('products');loadStore();
+ try{await adminApi('product.create',{product:{name,slug,price,compare_price:Number(document.getElementById('apOld').value||price),description:document.getElementById('apDesc').value.trim(),active:true,lifetime_updates:true}});adminTab('products');loadStore()}
+ catch(e){alert(e.message)}
 }
+async function adminToggleProduct(id,active){try{await adminApi('product.toggle',{id,active});adminTab('products');loadStore()}catch(e){alert(e.message)}}
 async function requireLoginForCheckout(){
  if(!db){alert('Secure login is temporarily unavailable.');return false}
  const {data}=await db.auth.getSession();
