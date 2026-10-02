@@ -47,7 +47,7 @@ exports.handler=async(event)=>{
   }
   if(action==='coupon.validate'){
    const code=String(body.code||'').trim().toUpperCase();if(!code)return out(400,{error:'Coupon code required'});
-   const {data,error:e}=await supabase.from('coupons').select('code,discount_type,value,active').eq('code',code).maybeSingle();
+   const {data,error:e}=await supabase.from('coupons').select('code,discount_type,value,active,expires_at').eq('code',code).maybeSingle();
    if(e)return out(400,{error:e.message});if(!data||!data.active)return out(404,{error:'Invalid or inactive coupon'});
    return out(200,{coupon:data});
   }
@@ -56,7 +56,7 @@ exports.handler=async(event)=>{
   }
   if(action==='coupon.save'){
    const c=body.coupon||{};if(!c.code||!Number(c.value))return out(400,{error:'Coupon code and value required'});
-   const row={code:String(c.code).trim().toUpperCase(),discount_type:c.discount_type==='fixed'?'fixed':'percent',value:Number(c.value),active:c.active!==false};
+   const row={code:String(c.code).trim().toUpperCase(),discount_type:c.discount_type==='fixed'?'fixed':'percent',value:Number(c.value),active:c.active!==false,expires_at:c.expires_at||null};
    const {data,error:e}=await supabase.from('coupons').upsert(row,{onConflict:'code'}).select().single();if(e)return out(400,{error:e.message});return out(200,{coupon:data});
   }
   if(action==='analytics.summary'){
