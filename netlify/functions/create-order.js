@@ -18,7 +18,7 @@ exports.handler=async event=>{
   }
   const total=Math.round((subtotal-discount)*100);if(total<100)return out(400,{error:'Order total is too low for online payment'});
   const rz=new Razorpay({key_id:process.env.RAZORPAY_KEY_ID,key_secret:process.env.RAZORPAY_KEY_SECRET});
-  const order=await rz.orders.create({amount:total,currency:'INR',receipt:'cv_'+Date.now(),notes:{user_id:user.id,product_ids:ids.join(','),coupon:coupon||''}});
+  const order=await rz.orders.create({amount:total,currency:'INR',receipt:'cv_'+Date.now(),notes:{user_id:user.id,product_ids:buyable.map(p=>p.id).join(','),coupon:coupon||''}});
   return out(200,{orderId:order.id,amount:order.amount,currency:order.currency,keyId:process.env.RAZORPAY_KEY_ID,subtotal,discount,total:subtotal-discount});
  }catch(e){return out(500,{error:'Unable to create payment order'})}
 };
