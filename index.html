@@ -153,7 +153,8 @@ function money(n){return '₹'+n.toLocaleString('en-IN')}function render(list=pr
 }
 async function googleLogin(){
  if(!db)return;
- try{localStorage.setItem('cv-auth-pending','1')}catch(e){}\n const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/',queryParams:{prompt:'select_account'}}});
+ try{localStorage.setItem('cv-auth-pending','1')}catch(e){}
+ const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/',queryParams:{prompt:'select_account'}}});
  if(error)document.getElementById('accountStatus').textContent='Google login needs provider setup: '+error.message;
 }
 async function logout(){if(db){await db.auth.signOut({scope:'local'});location.replace(location.origin)}}
