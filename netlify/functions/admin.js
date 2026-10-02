@@ -32,6 +32,11 @@ exports.handler=async(event)=>{
    await supabase.from('product_files').update({is_current:false}).eq('product_id',body.productId);
    const {data,error:e}=await supabase.from('product_files').insert({product_id:body.productId,version:body.version||'1.0',storage_path:body.storagePath,is_current:true}).select().single();if(e)return out(400,{error:e.message});return out(200,{file:data});
   }
+  if(action==='setting.save'){
+   if(!body.key)return out(400,{error:'Setting key required'});
+   const {data,error:e}=await supabase.from('store_settings').upsert({key:body.key,value:String(body.value??'')},{onConflict:'key'}).select().single();
+   if(e)return out(400,{error:e.message});return out(200,{setting:data});
+  }
   if(action==='orders.list'){
    const {data,error:e}=await supabase.from('purchases').select('*').order('created_at',{ascending:false}).limit(100);if(e)return out(400,{error:e.message});return out(200,{orders:data});
   }
