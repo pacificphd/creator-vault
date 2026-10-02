@@ -153,7 +153,7 @@ function money(n){return '₹'+n.toLocaleString('en-IN')}function render(list=pr
 }
 async function googleLogin(){
  if(!db)return;
- const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin,queryParams:{prompt:'select_account'}}});
+ const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/',queryParams:{prompt:'select_account',access_type:'offline'}}});
  if(error)document.getElementById('accountStatus').textContent='Google login needs provider setup: '+error.message;
 }
 async function logout(){if(db){await db.auth.signOut({scope:'local'});location.replace(location.origin)}}
@@ -178,7 +178,7 @@ async function loadDownloads(){
  const {data,error}=await db.from('purchases').select('granted_at,products(id,name,description)').eq('user_id',user.id).order('granted_at',{ascending:false});
  if(error||!data?.length){box.innerHTML='<div class="downloadCard"><b>No purchased products yet</b><p>Your verified purchases will appear here automatically.</p></div>';return}
  box.innerHTML=data.map(x=>'<div class="downloadCard"><b>'+x.products.name+'</b><p>'+ (x.products.description||'Purchased digital asset') +'</p><button class="btn dark" onclick="secureDownload(\''+x.products.id+'\')">Secure Download</button></div>').join('');
-}function openDownloads(){document.getElementById('downloadsModal').classList.add('on');loadDownloads()}function closeDownloads(){document.getElementById('downloadsModal').classList.remove('on')}let heroIndex=0,heroTimer;function heroGo(i){heroIndex=(i+3)%3;document.getElementById('heroTrack').style.transform=`translateX(-${heroIndex*100}%)`;document.querySelectorAll('.dot').forEach((d,n)=>d.classList.toggle('on',n===heroIndex));clearInterval(heroTimer);heroTimer=setInterval(()=>heroGo(heroIndex+1),4500)}function heroMove(d){heroGo(heroIndex+d)}heroTimer=setInterval(()=>heroGo(heroIndex+1),4500);render();count();renderCart();loadStore();loadStoreSettings();refreshSession();if(db)db.auth.onAuthStateChange((event)=>{setTimeout(refreshSession,0);if(event==='SIGNED_IN'&&location.hash)history.replaceState(null,'',location.pathname+location.search)});
+}function openDownloads(){document.getElementById('downloadsModal').classList.add('on');loadDownloads()}function closeDownloads(){document.getElementById('downloadsModal').classList.remove('on')}let heroIndex=0,heroTimer;function heroGo(i){heroIndex=(i+3)%3;document.getElementById('heroTrack').style.transform=`translateX(-${heroIndex*100}%)`;document.querySelectorAll('.dot').forEach((d,n)=>d.classList.toggle('on',n===heroIndex));clearInterval(heroTimer);heroTimer=setInterval(()=>heroGo(heroIndex+1),4500)}function heroMove(d){heroGo(heroIndex+d)}heroTimer=setInterval(()=>heroGo(heroIndex+1),4500);render();count();renderCart();loadStore();loadStoreSettings();refreshSession();if(db)db.auth.onAuthStateChange((event)=>{setTimeout(refreshSession,0);if(event==='SIGNED_IN'&&(location.hash||location.search.includes('code=')))history.replaceState(null,'',location.pathname)});
 </script><!-- netlify-deploy-trigger: public-repo -->
 <!-- deploy-sync-2026-10-02 -->
 </body></html>
