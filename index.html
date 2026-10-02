@@ -25,7 +25,7 @@ const products=[
 ];
 let cart=JSON.parse(localStorage.getItem('cv-cart')||'[]');
 let db=null;
-try{const c=window.CREATOR_VAULT_CONFIG;if(c?.supabaseUrl&&c?.supabasePublishableKey&&window.supabase)db=window.supabase.createClient(c.supabaseUrl,c.supabasePublishableKey,{auth:{flowType:'pkce',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}})}catch(e){console.warn('Database connection unavailable',e)}
+try{const c=window.CREATOR_VAULT_CONFIG;if(c?.supabaseUrl&&c?.supabasePublishableKey&&window.supabase)db=window.supabase.createClient(c.supabaseUrl,c.supabasePublishableKey,{auth:{flowType:'implicit',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}})}catch(e){console.warn('Database connection unavailable',e)}
 async function loadStore(){
  if(!db)return;
  try{
