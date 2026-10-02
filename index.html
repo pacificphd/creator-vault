@@ -13,7 +13,7 @@
 <section class="section"><div class="visualStrip"><div class="promoVisual"><div><div class="eyebrow">Reel Projects</div><h2 style="font-family:Georgia,serif;font-size:34px;margin:8px 0">Edit faster. Deliver on time.</h2><p>Ready project structures for wedding & pre-wedding reels.</p></div></div><div class="promoVisual light"><div><div class="eyebrow" style="color:#77531f">Wedding Assets</div><h2 style="font-family:Georgia,serif;font-size:34px;margin:8px 0">Premium creator toolkit</h2><p>Designed for photographers, filmmakers and studios.</p></div></div></div></section><section class="section"><div class="head"><h2>Made for working creators</h2></div><div class="trust"><div><b>⚡ Instant Access</b><p>Digital assets ready after purchase.</p></div><div><b>✓ Creator Friendly</b><p>Clear compatibility and usage details.</p></div><div><b>↻ Product Updates</b><p>Eligible purchases can receive future versions.</p></div></div></section>
 <section class="section" id="faq"><div class="head"><h2>FAQ</h2></div><div class="spec"><b>How will downloads work?</b><p>After secure payment, purchased assets will appear inside your account under My Downloads.</p></div><div class="spec"><b>Can I use these for client work?</b><p>Yes, according to the license shown on each product page. Redistribution or resale of source assets is not allowed.</p></div></section></div>
 <div class="bottom"><span onclick="location.href='#'">⌂<br>Home</span><span onclick="location.href='#shop'">▦<br>Shop</span><span onclick="openDownloads()">⇩<br>Downloads</span><span onclick="openAccount()">◯<br>Account</span></div>
-<div class="drawer" id="cartDrawer" onclick="if(event.target===this)closeCart()"><div class="cartPanel"><button class="close" onclick="closeCart()">×</button><div class="eyebrow">Your order</div><h2 style="font-family:Georgia,serif;font-size:34px">Cart</h2><div id="cartItems"></div><div id="cartTotal"></div><div class="checkoutBox"><b>Checkout</b><p style="font-size:13px;color:#70695f">Digital delivery only — no shipping address required.</p><input class="field" id="buyerName" placeholder="Full name"><input class="field" id="buyerEmail" type="email" placeholder="Email address"><input class="field" id="coupon" placeholder="Coupon code"><button class="btn dark" style="width:100%" onclick="checkout()">Continue to Payment</button><p id="checkoutStatus" style="font-size:12px;color:#70695f;margin:10px 0 0"></p></div></div></div><div class="modal" id="accountModal" onclick="if(event.target===this)closeAccount()"><div class="sheet"><button class="close" onclick="closeAccount()">×</button><div class="eyebrow">Creator Vault</div><h2>My Account</h2><div class="accountGrid"><button class="outline" onclick="googleLogin()">Continue with Google</button><button class="outline" onclick="emailLogin()">Email Login</button></div><button id="logoutBtn" class="outline" style="width:100%;margin-top:12px;display:none" onclick="logout()">Logout</button><div class="spec"><b>Account status</b><p id="accountStatus">Sign in to access purchases and secure downloads.</p></div><button class="btn dark" style="width:100%" onclick="closeAccount();openDownloads()">My Downloads</button><button id="adminBtn" class="outline" style="width:100%;margin-top:10px;display:none" onclick="closeAccount();openAdmin()">Admin Panel</button></div></div><div class="modal" id="downloadsModal" onclick="if(event.target===this)closeDownloads()"><div class="sheet"><button class="close" onclick="closeDownloads()">×</button><div class="eyebrow">Purchased library</div><h2>My Downloads</h2><div id="downloadsList"><div class="downloadCard"><b>No purchased products yet</b><p>After verified payment, only products owned by this account will appear here.</p></div></div></div></div><div class="modal" id="modal" onclick="if(event.target===this)closeModal()"><div class="sheet" id="sheet"></div></div><div class="modal" id="adminModal" onclick="if(event.target===this)closeAdmin()"><div class="sheet"><button class="close" onclick="closeAdmin()">×</button><div class="eyebrow">Creator Vault</div><h2>Admin Panel</h2><div class="adminTabs"><button class="outline" onclick="adminTab('products')">Products</button><button class="outline" onclick="adminTab('orders')">Orders</button><button class="outline" onclick="adminTab('customers')">Customers</button><button class="outline" onclick="adminTab('files')">Files</button><button class="outline" onclick="adminTab('store')">Store</button><button class="outline" onclick="adminTab('analytics')">Analytics</button><button class="outline" onclick="adminTab('coupons')">Coupons</button><button class="outline" onclick="adminTab('grant')">Grant Access</button></div><div id="adminBody"><p>Checking admin access…</p></div></div></div><div class="toast" id="toast">Added to cart</div>
+<div class="drawer" id="cartDrawer" onclick="if(event.target===this)closeCart()"><div class="cartPanel"><button class="close" onclick="closeCart()">×</button><div class="eyebrow">Your order</div><h2 style="font-family:Georgia,serif;font-size:34px">Cart</h2><div id="cartItems"></div><div id="cartTotal"></div><div class="checkoutBox"><b>Checkout</b><p style="font-size:13px;color:#70695f">Digital delivery only — no shipping address required.</p><input class="field" id="buyerName" placeholder="Full name"><input class="field" id="buyerEmail" type="email" placeholder="Email address"><input class="field" id="coupon" placeholder="Coupon code"><button class="btn dark" style="width:100%" onclick="checkout()">Continue to Payment</button><p id="checkoutStatus" style="font-size:12px;color:#70695f;margin:10px 0 0"></p></div></div></div><div class="modal" id="accountModal" onclick="if(event.target===this)closeAccount()"><div class="sheet"><button class="close" onclick="closeAccount()">×</button><div class="eyebrow">Creator Vault</div><h2>My Account</h2><div class="accountGrid"><button class="outline" onclick="googleLogin()">Continue with Google</button><button class="outline" onclick="emailLogin()">Email Login</button></div><button id="logoutBtn" class="outline" style="width:100%;margin-top:12px;display:none" onclick="logout()">Logout</button><div class="spec"><b>Account status</b><p id="accountStatus">Sign in to access purchases and secure downloads.</p><button class="outline" style="width:100%;margin-top:10px;font-size:12px" onclick="showAuthDebug()">Auth Diagnostic</button></div><button class="btn dark" style="width:100%" onclick="closeAccount();openDownloads()">My Downloads</button><button id="adminBtn" class="outline" style="width:100%;margin-top:10px;display:none" onclick="closeAccount();openAdmin()">Admin Panel</button></div></div><div class="modal" id="downloadsModal" onclick="if(event.target===this)closeDownloads()"><div class="sheet"><button class="close" onclick="closeDownloads()">×</button><div class="eyebrow">Purchased library</div><h2>My Downloads</h2><div id="downloadsList"><div class="downloadCard"><b>No purchased products yet</b><p>After verified payment, only products owned by this account will appear here.</p></div></div></div></div><div class="modal" id="modal" onclick="if(event.target===this)closeModal()"><div class="sheet" id="sheet"></div></div><div class="modal" id="adminModal" onclick="if(event.target===this)closeAdmin()"><div class="sheet"><button class="close" onclick="closeAdmin()">×</button><div class="eyebrow">Creator Vault</div><h2>Admin Panel</h2><div class="adminTabs"><button class="outline" onclick="adminTab('products')">Products</button><button class="outline" onclick="adminTab('orders')">Orders</button><button class="outline" onclick="adminTab('customers')">Customers</button><button class="outline" onclick="adminTab('files')">Files</button><button class="outline" onclick="adminTab('store')">Store</button><button class="outline" onclick="adminTab('analytics')">Analytics</button><button class="outline" onclick="adminTab('coupons')">Coupons</button><button class="outline" onclick="adminTab('grant')">Grant Access</button></div><div id="adminBody"><p>Checking admin access…</p></div></div></div><div class="toast" id="toast">Added to cart</div>
 <script>
 const products=[
 {id:1,cat:'LUTs',name:'Cinematic Wedding LUT Pack',price:799,old:1299,qty:'25 LUTs',format:'.cube',compat:'Premiere Pro, DaVinci Resolve, Final Cut Pro',size:'85 MB',desc:'Soft cinematic wedding color with natural skin tones and elegant contrast.',inc:'25 creative LUTs, installation guide, preview reference',cls:''},
@@ -25,6 +25,14 @@ const products=[
 ];
 let cart=JSON.parse(localStorage.getItem('cv-cart')||'[]');
 let db=null;
+const authDebug={startedAt:new Date().toISOString(),href:location.href,origin:location.origin,path:location.pathname,hashKeys:[],queryKeys:[],events:[],sdk:window.supabase?'loaded':'missing'};
+try{
+ const hp=new URLSearchParams(location.hash.replace(/^#/,''));
+ const qp=new URLSearchParams(location.search);
+ authDebug.hashKeys=[...hp.keys()]; authDebug.queryKeys=[...qp.keys()];
+ if(hp.get('error')||hp.get('error_description')) authDebug.callbackError=hp.get('error_description')||hp.get('error');
+ if(qp.get('error')||qp.get('error_description')) authDebug.callbackError=qp.get('error_description')||qp.get('error');
+}catch(e){authDebug.parseError=e.message}
 try{
  const c=window.CREATOR_VAULT_CONFIG;
  if(c?.supabaseUrl&&c?.supabasePublishableKey&&window.supabase){
@@ -32,7 +40,27 @@ try{
    auth:{flowType:'implicit',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
   });
  }
-}catch(e){console.warn('Database connection unavailable',e)}
+}catch(e){authDebug.clientError=e.message;console.warn('Database connection unavailable',e)}
+async function captureAuthDebug(){
+ if(!db)return;
+ try{
+  const s=await db.auth.getSession();
+  authDebug.hasSession=!!s.data?.session;
+  authDebug.sessionError=s.error?.message||null;
+  const u=await db.auth.getUser();
+  authDebug.hasUser=!!u.data?.user;
+  authDebug.userError=u.error?.message||null;
+  authDebug.storageKeys=Object.keys(localStorage).filter(k=>k.startsWith('sb-')||k.startsWith('cv-auth')).map(k=>k.replace(/[^a-zA-Z0-9._-]/g,'')).slice(0,20);
+  localStorage.setItem('cv-auth-debug',JSON.stringify(authDebug));
+ }catch(e){authDebug.debugError=e.message}
+}
+function showAuthDebug(){
+ captureAuthDebug().then(()=>{
+  const safe={...authDebug};
+  safe.href=location.origin+location.pathname+(authDebug.queryKeys.length?'?['+authDebug.queryKeys.join(',')+']':'')+(authDebug.hashKeys.length?'#['+authDebug.hashKeys.join(',')+']':'');
+  alert('AUTH DIAGNOSTIC\\n'+JSON.stringify(safe,null,2));
+ });
+}
 async function loadStore(){
  if(!db)return;
  try{
@@ -160,9 +188,10 @@ function money(n){return '₹'+n.toLocaleString('en-IN')}function render(list=pr
 }
 async function googleLogin(){
  if(!db)return;
- try{localStorage.setItem('cv-auth-pending','1')}catch(e){}
- const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/',queryParams:{prompt:'select_account'}}});
- if(error)document.getElementById('accountStatus').textContent='Google login needs provider setup: '+error.message;
+ try{localStorage.setItem('cv-auth-pending','1');localStorage.removeItem('cv-auth-debug')}catch(e){}
+ const {data,error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/',queryParams:{prompt:'select_account'}}});
+ if(error){authDebug.startError=error.message;document.getElementById('accountStatus').textContent='Google login needs provider setup: '+error.message}
+ else authDebug.authorizeUrlHost=(()=>{try{return new URL(data?.url||'').host}catch(e){return null}})();
 }
 async function logout(){if(db){await db.auth.signOut({scope:'local'});location.replace(location.origin)}}
 async function secureDownload(productId){
@@ -186,7 +215,7 @@ async function loadDownloads(){
  const {data,error}=await db.from('purchases').select('granted_at,products(id,name,description)').eq('user_id',user.id).order('granted_at',{ascending:false});
  if(error||!data?.length){box.innerHTML='<div class="downloadCard"><b>No purchased products yet</b><p>Your verified purchases will appear here automatically.</p></div>';return}
  box.innerHTML=data.map(x=>'<div class="downloadCard"><b>'+x.products.name+'</b><p>'+ (x.products.description||'Purchased digital asset') +'</p><button class="btn dark" onclick="secureDownload(\''+x.products.id+'\')">Secure Download</button></div>').join('');
-}function openDownloads(){document.getElementById('downloadsModal').classList.add('on');loadDownloads()}function closeDownloads(){document.getElementById('downloadsModal').classList.remove('on')}let heroIndex=0,heroTimer;function heroGo(i){heroIndex=(i+3)%3;document.getElementById('heroTrack').style.transform=`translateX(-${heroIndex*100}%)`;document.querySelectorAll('.dot').forEach((d,n)=>d.classList.toggle('on',n===heroIndex));clearInterval(heroTimer);heroTimer=setInterval(()=>heroGo(heroIndex+1),4500)}function heroMove(d){heroGo(heroIndex+d)}heroTimer=setInterval(()=>heroGo(heroIndex+1),4500);render();count();renderCart();loadStore();loadStoreSettings();if(db){db.auth.onAuthStateChange((event,session)=>{setTimeout(refreshSession,0)});setTimeout(refreshSession,500)}else{refreshSession()}
+}function openDownloads(){document.getElementById('downloadsModal').classList.add('on');loadDownloads()}function closeDownloads(){document.getElementById('downloadsModal').classList.remove('on')}let heroIndex=0,heroTimer;function heroGo(i){heroIndex=(i+3)%3;document.getElementById('heroTrack').style.transform=`translateX(-${heroIndex*100}%)`;document.querySelectorAll('.dot').forEach((d,n)=>d.classList.toggle('on',n===heroIndex));clearInterval(heroTimer);heroTimer=setInterval(()=>heroGo(heroIndex+1),4500)}function heroMove(d){heroGo(heroIndex+d)}heroTimer=setInterval(()=>heroGo(heroIndex+1),4500);render();count();renderCart();loadStore();loadStoreSettings();if(db){db.auth.onAuthStateChange((event,session)=>{authDebug.events.push(event);authDebug.eventHasSession=!!session;captureAuthDebug();setTimeout(refreshSession,0)});setTimeout(()=>{refreshSession();captureAuthDebug()},700)}else{refreshSession()}
 </script><!-- netlify-deploy-trigger: public-repo -->
 <!-- deploy-sync-2026-10-02 -->
 </body></html>
