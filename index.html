@@ -136,7 +136,7 @@ function money(n){return '₹'+n.toLocaleString('en-IN')}function render(list=pr
  const code=(document.getElementById('coupon')?.value||'').trim();
  if(code){
   try{
-   const cj=await adminApi('coupon.validate',{code});const c=cj.coupon;
+   const cr=await fetch('/.netlify/functions/coupon',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});const cj=await cr.json();if(!cr.ok)throw new Error(cj.error||'Coupon validation failed');const c=cj.coupon;
    const discount=c.discount_type==='fixed'?Number(c.value):subtotal*(Number(c.value)/100);
    total=Math.max(0,subtotal-Math.min(subtotal,discount));couponText=' Coupon '+c.code+' applied.';
   }catch(e){if(st)st.textContent=e.message;return}
