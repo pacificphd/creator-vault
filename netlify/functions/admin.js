@@ -18,6 +18,20 @@ exports.handler=async(event)=>{
   if(action==='product.toggle'){
    const {error:e}=await supabase.from('products').update({active:!!body.active}).eq('id',body.id);if(e)return out(400,{error:e.message});return out(200,{ok:true});
   }
+  if(action==='product.update'){
+   const p=body.product||{}; if(!body.id)return out(400,{error:'Product id required'});
+   const patch={}; ['name','slug','description','compatibility','file_size'].forEach(k=>{if(p[k]!==undefined)patch[k]=p[k]});
+   if(p.price!==undefined)patch.price=Number(p.price); if(p.compare_price!==undefined)patch.compare_price=Number(p.compare_price);
+   const {data,error:e}=await supabase.from('products').update(patch).eq('id',body.id).select().single();if(e)return out(400,{error:e.message});return out(200,{product:data});
+  }
+  if(action==='file.list'){
+   const {data,error:e}=await supabase.from('product_files').select('id,product_id,version,storage_path,is_current,created_at').eq('product_id',body.productId).order('created_at',{ascending:false});if(e)return out(400,{error:e.message});return out(200,{files:data});
+  }
+  if(action==='file.link'){
+   if(!body.productId||!body.storagePath)return out(400,{error:'Product and storage path required'});
+   await supabase.from('product_files').update({is_current:false}).eq('product_id',body.productId);
+   const {data,error:e}=await supabase.from('product_files').insert({product_id:body.productId,version:body.version||'1.0',storage_path:body.storagePath,is_current:true}).select().single();if(e)return out(400,{error:e.message});return out(200,{file:data});
+  }
   if(action==='orders.list'){
    const {data,error:e}=await supabase.from('purchases').select('*').order('created_at',{ascending:false}).limit(100);if(e)return out(400,{error:e.message});return out(200,{orders:data});
   }
