@@ -37,6 +37,14 @@ exports.handler=async(event)=>{
    const {data,error:e}=await supabase.from('store_settings').upsert({key:body.key,value:String(body.value??'')},{onConflict:'key'}).select().single();
    if(e)return out(400,{error:e.message});return out(200,{setting:data});
   }
+  if(action==='coupon.list'){
+   const {data,error:e}=await supabase.from('coupons').select('*').order('created_at',{ascending:false});if(e)return out(400,{error:e.message});return out(200,{coupons:data});
+  }
+  if(action==='coupon.save'){
+   const c=body.coupon||{};if(!c.code||!Number(c.value))return out(400,{error:'Coupon code and value required'});
+   const row={code:String(c.code).trim().toUpperCase(),discount_type:c.discount_type==='fixed'?'fixed':'percent',value:Number(c.value),active:c.active!==false};
+   const {data,error:e}=await supabase.from('coupons').upsert(row,{onConflict:'code'}).select().single();if(e)return out(400,{error:e.message});return out(200,{coupon:data});
+  }
   if(action==='analytics.summary'){
    const [p,o,d]=await Promise.all([
     supabase.from('products').select('id',{count:'exact',head:true}),
