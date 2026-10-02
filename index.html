@@ -153,7 +153,7 @@ function money(n){return '₹'+n.toLocaleString('en-IN')}function render(list=pr
 }
 async function googleLogin(){
  if(!db)return;
- const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin}});
+ const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin,queryParams:{prompt:'select_account'}}});
  if(error)document.getElementById('accountStatus').textContent='Google login needs provider setup: '+error.message;
 }
 async function logout(){if(db){await db.auth.signOut();location.reload()}}
