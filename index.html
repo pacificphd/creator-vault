@@ -63,7 +63,7 @@ async function adminTab(tab){
  }else if(tab==='files'){
   const {data,error}=await db.from('products').select('id,name').order('name');
   if(error){el.innerHTML='<p>Products could not be loaded.</p>';return}
-  el.innerHTML='<h3>Paid File Versions</h3><p>Upload the paid file to the private <b>paid-products</b> bucket, then link its exact storage path here.</p><select class="field" id="afProduct">'+(data||[]).map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('')+'</select><input class="field" id="afPath" placeholder="Exact storage path, e.g. package-v2.zip"><input class="field" id="afVersion" value="1.0" placeholder="Version"><button class="btn dark" onclick="adminLinkFile()">Set Current File</button><div id="afResult"></div>';
+  el.innerHTML='<h3>Paid File Versions</h3><p>Upload the paid file to the private <b>paid-products</b> bucket, then link its exact storage path here.</p><select class="field" id="afProduct" onchange="adminLoadFiles()">'+(data||[]).map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('')+'</select><input class="field" id="afPath" placeholder="Exact storage path, e.g. package-v2.zip"><input class="field" id="afVersion" value="1.0" placeholder="Version"><button class="btn dark" onclick="adminLinkFile()">Set Current File</button><div id="afResult"></div><div id="afHistory"><p>Loading file history…</p></div>';adminLoadFiles();
  }else if(tab==='store'){
   el.innerHTML='<h3>Store Controls</h3><div class="spec"><b>Launch offer banner</b><p>Homepage offer text is controlled here.</p><input class="field" id="asOffer" value="'+(document.getElementById('offerBar')?.textContent||'LAUNCH OFFER — Save up to 40% on selected creator assets')+'"><button class="btn dark" onclick="saveStoreSettings()">Save Store Settings</button></div><div class="spec"><b>Store readiness</b><p>Payments remain disabled until Razorpay is securely connected and verified. Secure downloads remain ownership-protected.</p></div>';
  }else if(tab==='analytics'){
@@ -99,6 +99,11 @@ async function adminGrantAccess(){
  try{await adminApi('grant.access',{email,productId});document.getElementById('agResult').innerHTML='<div class="spec"><b>Access granted</b><p>Customer can now access this product from My Downloads.</p></div>'}catch(e){alert(e.message)}
 }
 async function adminSaveCoupon(){const code=document.getElementById('acCode').value.trim(),discount_type=document.getElementById('acType').value,value=Number(document.getElementById('acValue').value||0);if(!code||!value){alert('Code and discount required.');return}try{await adminApi('coupon.save',{coupon:{code,discount_type,value,active:true}});adminTab('coupons')}catch(e){alert(e.message)}}
+async function adminLoadFiles(){
+ const box=document.getElementById('afHistory'),sel=document.getElementById('afProduct');if(!box||!sel)return;
+ box.innerHTML='<p>Loading file history…</p>';
+ try{const j=await adminApi('file.list',{productId:sel.value});const rows=j.files||[];box.innerHTML='<h3>Version History</h3><table class="adminTable"><tr><th>Version</th><th>Storage path</th><th>Status</th></tr>'+(rows.map(f=>'<tr><td>'+f.version+'</td><td>'+f.storage_path+'</td><td>'+(f.is_current?'<b>Current</b>':'Previous')+'</td></tr>').join('')||'<tr><td colspan="3">No files linked yet</td></tr>')+'</table>'}catch(e){box.innerHTML='<p>'+e.message+'</p>'}
+}
 async function adminLinkFile(){
  const productId=document.getElementById('afProduct').value,storagePath=document.getElementById('afPath').value.trim(),version=document.getElementById('afVersion').value.trim()||'1.0';
  if(!storagePath){alert('Storage path is required.');return}
