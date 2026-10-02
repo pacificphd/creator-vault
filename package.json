@@ -1,1 +1,8 @@
-{"name":"creator-vault","private":true,"dependencies":{"@supabase/supabase-js":"^2.57.4"}}
+{
+  "name": "creator-vault",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "razorpay": "^2.9.6"
+  }
+}
