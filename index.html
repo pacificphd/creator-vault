@@ -25,7 +25,7 @@ const products=[
 ];
 let cart=JSON.parse(localStorage.getItem('cv-cart')||'[]');
 let db=null;
-try{const c=window.CREATOR_VAULT_CONFIG;if(c?.supabaseUrl&&c?.supabasePublishableKey&&window.supabase)db=window.supabase.createClient(c.supabaseUrl,c.supabasePublishableKey)}catch(e){console.warn('Database connection unavailable',e)}
+try{const c=window.CREATOR_VAULT_CONFIG;if(c?.supabaseUrl&&c?.supabasePublishableKey&&window.supabase)db=window.supabase.createClient(c.supabaseUrl,c.supabasePublishableKey,{auth:{flowType:'pkce',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}})}catch(e){console.warn('Database connection unavailable',e)}
 async function loadStore(){
  if(!db)return;
  try{
@@ -153,7 +153,7 @@ function money(n){return '₹'+n.toLocaleString('en-IN')}function render(list=pr
 }
 async function googleLogin(){
  if(!db)return;
- const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/',queryParams:{prompt:'select_account',access_type:'offline'}}});
+ try{localStorage.setItem('cv-auth-pending','1')}catch(e){}\n const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/',queryParams:{prompt:'select_account'}}});
  if(error)document.getElementById('accountStatus').textContent='Google login needs provider setup: '+error.message;
 }
 async function logout(){if(db){await db.auth.signOut({scope:'local'});location.replace(location.origin)}}
