@@ -178,4 +178,5 @@ async function loadDownloads(){
  box.innerHTML=data.map(x=>'<div class="downloadCard"><b>'+x.products.name+'</b><p>'+ (x.products.description||'Purchased digital asset') +'</p><button class="btn dark" onclick="secureDownload(\''+x.products.id+'\')">Secure Download</button></div>').join('');
 }function openDownloads(){document.getElementById('downloadsModal').classList.add('on');loadDownloads()}function closeDownloads(){document.getElementById('downloadsModal').classList.remove('on')}let heroIndex=0,heroTimer;function heroGo(i){heroIndex=(i+3)%3;document.getElementById('heroTrack').style.transform=`translateX(-${heroIndex*100}%)`;document.querySelectorAll('.dot').forEach((d,n)=>d.classList.toggle('on',n===heroIndex));clearInterval(heroTimer);heroTimer=setInterval(()=>heroGo(heroIndex+1),4500)}function heroMove(d){heroGo(heroIndex+d)}heroTimer=setInterval(()=>heroGo(heroIndex+1),4500);render();count();renderCart();loadStore();loadStoreSettings();refreshSession();
 </script><!-- netlify-deploy-trigger: public-repo -->
+<!-- deploy-sync-2026-10-02 -->
 </body></html>
