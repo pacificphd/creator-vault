@@ -25,7 +25,21 @@ const products=[
 ];
 let cart=JSON.parse(localStorage.getItem('cv-cart')||'[]');
 let db=null;
-try{const c=window.CREATOR_VAULT_CONFIG;if(c?.supabaseUrl&&c?.supabasePublishableKey&&window.supabase)db=window.supabase.createClient(c.supabaseUrl,c.supabasePublishableKey,{auth:{flowType:'implicit',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}})}catch(e){console.warn('Database connection unavailable',e)}
+let oauthReturn=null;
+try{
+ const h=new URLSearchParams(location.hash.replace(/^#/,''));
+ if(h.get('access_token')&&h.get('refresh_token')) oauthReturn={access_token:h.get('access_token'),refresh_token:h.get('refresh_token')};
+}catch(e){}
+try{const c=window.CREATOR_VAULT_CONFIG;if(c?.supabaseUrl&&c?.supabasePublishableKey&&window.supabase)db=window.supabase.createClient(c.supabaseUrl,c.supabasePublishableKey,{auth:{flowType:'implicit',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}})}catch(e){console.warn('Database connection unavailable',e)}
+async function finishOAuthReturn(){
+ if(!db||!oauthReturn)return;
+ const {error}=await db.auth.setSession(oauthReturn);
+ oauthReturn=null;
+ if(error){console.error('OAuth session error',error);const st=document.getElementById('accountStatus');if(st)st.textContent='Google login error: '+error.message;return}
+ history.replaceState(null,'',location.pathname+location.search);
+ try{localStorage.removeItem('cv-auth-pending')}catch(e){}
+ await refreshSession();
+}
 async function loadStore(){
  if(!db)return;
  try{
@@ -179,7 +193,7 @@ async function loadDownloads(){
  const {data,error}=await db.from('purchases').select('granted_at,products(id,name,description)').eq('user_id',user.id).order('granted_at',{ascending:false});
  if(error||!data?.length){box.innerHTML='<div class="downloadCard"><b>No purchased products yet</b><p>Your verified purchases will appear here automatically.</p></div>';return}
  box.innerHTML=data.map(x=>'<div class="downloadCard"><b>'+x.products.name+'</b><p>'+ (x.products.description||'Purchased digital asset') +'</p><button class="btn dark" onclick="secureDownload(\''+x.products.id+'\')">Secure Download</button></div>').join('');
-}function openDownloads(){document.getElementById('downloadsModal').classList.add('on');loadDownloads()}function closeDownloads(){document.getElementById('downloadsModal').classList.remove('on')}let heroIndex=0,heroTimer;function heroGo(i){heroIndex=(i+3)%3;document.getElementById('heroTrack').style.transform=`translateX(-${heroIndex*100}%)`;document.querySelectorAll('.dot').forEach((d,n)=>d.classList.toggle('on',n===heroIndex));clearInterval(heroTimer);heroTimer=setInterval(()=>heroGo(heroIndex+1),4500)}function heroMove(d){heroGo(heroIndex+d)}heroTimer=setInterval(()=>heroGo(heroIndex+1),4500);render();count();renderCart();loadStore();loadStoreSettings();if(db){db.auth.onAuthStateChange((event,session)=>{if(session)setTimeout(refreshSession,0)});setTimeout(refreshSession,800)}else{refreshSession()}
+}function openDownloads(){document.getElementById('downloadsModal').classList.add('on');loadDownloads()}function closeDownloads(){document.getElementById('downloadsModal').classList.remove('on')}let heroIndex=0,heroTimer;function heroGo(i){heroIndex=(i+3)%3;document.getElementById('heroTrack').style.transform=`translateX(-${heroIndex*100}%)`;document.querySelectorAll('.dot').forEach((d,n)=>d.classList.toggle('on',n===heroIndex));clearInterval(heroTimer);heroTimer=setInterval(()=>heroGo(heroIndex+1),4500)}function heroMove(d){heroGo(heroIndex+d)}heroTimer=setInterval(()=>heroGo(heroIndex+1),4500);render();count();renderCart();loadStore();loadStoreSettings();if(db){db.auth.onAuthStateChange((event,session)=>{if(session)setTimeout(refreshSession,0)});finishOAuthReturn().then(()=>setTimeout(refreshSession,250))}else{refreshSession()}
 </script><!-- netlify-deploy-trigger: public-repo -->
 <!-- deploy-sync-2026-10-02 -->
 </body></html>
