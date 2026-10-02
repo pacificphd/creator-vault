@@ -124,8 +124,19 @@ function money(n){return '₹'+n.toLocaleString('en-IN')}function render(list=pr
  const ok=await requireLoginForCheckout(); if(!ok)return;
  const {data}=await db.auth.getSession(); const u=data?.session?.user;
  const email=document.getElementById('buyerEmail'); if(email&&!email.value)email.value=u?.email||'';
- const st=document.getElementById('checkoutStatus'); if(st)st.textContent='Account verified. Secure payment connection is the next step.';
- alert('Account verified. Razorpay payment connection is pending activation.');
+ const st=document.getElementById('checkoutStatus');
+ const subtotal=cart.map(id=>products.find(p=>String(p.id)===String(id))).filter(Boolean).reduce((a,p)=>a+Number(p.price||0),0);
+ let total=subtotal, couponText='';
+ const code=(document.getElementById('coupon')?.value||'').trim();
+ if(code){
+  try{
+   const cj=await adminApi('coupon.validate',{code});const c=cj.coupon;
+   const discount=c.discount_type==='fixed'?Number(c.value):subtotal*(Number(c.value)/100);
+   total=Math.max(0,subtotal-Math.min(subtotal,discount));couponText=' Coupon '+c.code+' applied.';
+  }catch(e){if(st)st.textContent=e.message;return}
+ }
+ if(st)st.textContent='Account verified.'+couponText+' Final total: '+money(total)+'. Secure payment connection is the next step.';
+ alert('Account verified. Final total '+money(total)+'. Razorpay payment connection is pending activation.');
 }function openAccount(){document.getElementById('accountModal').classList.add('on')}function closeAccount(){document.getElementById('accountModal').classList.remove('on')}async function emailLogin(){
  if(!db){document.getElementById('accountStatus').textContent='Secure login connection unavailable.';return}
  const email=prompt('Enter your email for a secure login link:'); if(!email)return;
