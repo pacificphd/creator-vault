@@ -44,6 +44,12 @@ exports.handler=async(event)=>{
    const {data,error:e}=await supabase.from('purchases').upsert({user_id:target.id,product_id:body.productId},{onConflict:'user_id,product_id'}).select().single();
    if(e)return out(400,{error:e.message});return out(200,{purchase:data});
   }
+  if(action==='coupon.validate'){
+   const code=String(body.code||'').trim().toUpperCase();if(!code)return out(400,{error:'Coupon code required'});
+   const {data,error:e}=await supabase.from('coupons').select('code,discount_type,value,active').eq('code',code).maybeSingle();
+   if(e)return out(400,{error:e.message});if(!data||!data.active)return out(404,{error:'Invalid or inactive coupon'});
+   return out(200,{coupon:data});
+  }
   if(action==='coupon.list'){
    const {data,error:e}=await supabase.from('coupons').select('*').order('created_at',{ascending:false});if(e)return out(400,{error:e.message});return out(200,{coupons:data});
   }
