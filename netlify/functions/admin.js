@@ -41,7 +41,8 @@ exports.handler=async(event)=>{
    if(!body.email||!body.productId)return out(400,{error:'Email and product required'});
    const {data:users,error:ue}=await supabase.auth.admin.listUsers({page:1,perPage:1000});if(ue)return out(400,{error:ue.message});
    const target=(users.users||[]).find(u=>(u.email||'').toLowerCase()===String(body.email).trim().toLowerCase());if(!target)return out(404,{error:'No account found for this email'});
-   const {data,error:e}=await supabase.from('purchases').upsert({user_id:target.id,product_id:body.productId},{onConflict:'user_id,product_id'}).select().single();
+   const {data:existing,error:xe}=await supabase.from('purchases').select('id').eq('user_id',target.id).eq('product_id',body.productId).maybeSingle();if(xe)return out(400,{error:xe.message});if(existing)return out(200,{purchase:existing,alreadyGranted:true});
+   const {data,error:e}=await supabase.from('purchases').insert({user_id:target.id,product_id:body.productId}).select().single();
    if(e)return out(400,{error:e.message});return out(200,{purchase:data});
   }
   if(action==='coupon.validate'){
