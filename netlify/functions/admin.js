@@ -37,6 +37,13 @@ exports.handler=async(event)=>{
    const {data,error:e}=await supabase.from('store_settings').upsert({key:body.key,value:String(body.value??'')},{onConflict:'key'}).select().single();
    if(e)return out(400,{error:e.message});return out(200,{setting:data});
   }
+  if(action==='grant.access'){
+   if(!body.email||!body.productId)return out(400,{error:'Email and product required'});
+   const {data:users,error:ue}=await supabase.auth.admin.listUsers({page:1,perPage:1000});if(ue)return out(400,{error:ue.message});
+   const target=(users.users||[]).find(u=>(u.email||'').toLowerCase()===String(body.email).trim().toLowerCase());if(!target)return out(404,{error:'No account found for this email'});
+   const {data,error:e}=await supabase.from('purchases').upsert({user_id:target.id,product_id:body.productId},{onConflict:'user_id,product_id'}).select().single();
+   if(e)return out(400,{error:e.message});return out(200,{purchase:data});
+  }
   if(action==='coupon.list'){
    const {data,error:e}=await supabase.from('coupons').select('*').order('created_at',{ascending:false});if(e)return out(400,{error:e.message});return out(200,{coupons:data});
   }
