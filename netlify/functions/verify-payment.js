@@ -19,8 +19,9 @@ exports.handler=async event=>{
   const notes=order.notes||{};if(String(notes.user_id||'')!==user.id)return out(403,{error:'Payment does not belong to this account'});
   const ids=String(notes.product_ids||'').split(',').map(x=>x.trim()).filter(Boolean);if(!ids.length)return out(400,{error:'Order has no products'});
   const {data:products,error:pe0}=await supabase.from('products').select('id').in('id',ids);if(pe0||!products||products.length!==ids.length)return out(400,{error:'Order products could not be verified'});
-  const rows=ids.map(product_id=>({user_id:user.id,product_id}));
-  const {error:pe}=await supabase.from('purchases').upsert(rows,{onConflict:'user_id,product_id'});if(pe)return out(500,{error:'Payment verified but purchase access could not be granted'});
+  const {data:owned,error:oe}=await supabase.from('purchases').select('product_id').eq('user_id',user.id).in('product_id',ids);if(oe)return out(500,{error:'Could not verify existing purchases'});
+  const have=new Set((owned||[]).map(x=>String(x.product_id))),missing=ids.filter(id=>!have.has(String(id)));
+  if(missing.length){const rows=missing.map(product_id=>({user_id:user.id,product_id}));const {error:pe}=await supabase.from('purchases').insert(rows);if(pe)return out(500,{error:'Payment verified but purchase access could not be granted'})}
   return out(200,{ok:true,paymentId:b.razorpay_payment_id,granted:ids.length});
  }catch(e){return out(500,{error:'Payment verification failed'})}
 };
