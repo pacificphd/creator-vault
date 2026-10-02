@@ -13,8 +13,8 @@ exports.handler=async event=>{
   if(!products||products.length!==ids.length||products.some(p=>!p.active))return out(400,{error:'One or more products are unavailable'});
   const subtotal=products.reduce((a,p)=>a+Number(p.price||0),0);let discount=0,coupon=null;
   if(body.coupon){
-   const code=String(body.coupon).trim().toUpperCase();const {data:c}=await supabase.from('coupons').select('code,discount_type,value,active').eq('code',code).maybeSingle();
-   if(!c||!c.active)return out(400,{error:'Invalid or inactive coupon'});coupon=c.code;discount=c.discount_type==='fixed'?Number(c.value):subtotal*(Number(c.value)/100);discount=Math.min(subtotal,Math.max(0,discount));
+   const code=String(body.coupon).trim().toUpperCase();const {data:c}=await supabase.from('coupons').select('code,discount_type,value,active,expires_at').eq('code',code).maybeSingle();
+   if(!c||!c.active)return out(400,{error:'Invalid or inactive coupon'});if(c.expires_at&&new Date(c.expires_at).getTime()<=Date.now())return out(400,{error:'Coupon has expired'});coupon=c.code;discount=c.discount_type==='fixed'?Number(c.value):subtotal*(Number(c.value)/100);discount=Math.min(subtotal,Math.max(0,discount));
   }
   const total=Math.round((subtotal-discount)*100);if(total<100)return out(400,{error:'Order total is too low for online payment'});
   const rz=new Razorpay({key_id:process.env.RAZORPAY_KEY_ID,key_secret:process.env.RAZORPAY_KEY_SECRET});
