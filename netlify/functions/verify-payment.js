@@ -16,8 +16,10 @@ exports.handler=async event=>{
   const rz=new Razorpay({key_id:process.env.RAZORPAY_KEY_ID,key_secret:process.env.RAZORPAY_KEY_SECRET});
   const [order,payment]=await Promise.all([rz.orders.fetch(b.razorpay_order_id),rz.payments.fetch(b.razorpay_payment_id)]);
   if(!order||!payment||payment.order_id!==order.id||payment.status!=='captured')return out(400,{error:'Payment is not completed'});
+  if(String(order.status||'')!=='paid')return out(400,{error:'Order is not marked paid'});
   if(Number(payment.amount)!==Number(order.amount)||String(payment.currency||'')!==String(order.currency||''))return out(400,{error:'Payment amount verification failed'});
   const notes=order.notes||{};if(String(notes.user_id||'')!==user.id)return out(403,{error:'Payment does not belong to this account'});
+  if(String(order.currency||'')!=='INR')return out(400,{error:'Unexpected payment currency'});
   const ids=String(notes.product_ids||'').split(',').map(x=>x.trim()).filter(Boolean);if(!ids.length)return out(400,{error:'Order has no products'});
   const {data:products,error:pe0}=await supabase.from('products').select('id').in('id',ids);if(pe0||!products||products.length!==ids.length)return out(400,{error:'Order products could not be verified'});
   const {data:owned,error:oe}=await supabase.from('purchases').select('product_id').eq('user_id',user.id).in('product_id',ids);if(oe)return out(500,{error:'Could not verify existing purchases'});
