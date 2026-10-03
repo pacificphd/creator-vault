@@ -16,9 +16,9 @@ exports.handler=async event=>{
    const code=String(body.coupon).trim().toUpperCase();const {data:c}=await supabase.from('coupons').select('code,discount_type,value,active,expires_at').eq('code',code).maybeSingle();
    if(!c||!c.active)return out(400,{error:'Invalid or inactive coupon'});if(c.expires_at&&new Date(c.expires_at).getTime()<=Date.now())return out(400,{error:'Coupon has expired'});coupon=c.code;discount=c.discount_type==='fixed'?Number(c.value):subtotal*(Number(c.value)/100);discount=Math.min(subtotal,Math.max(0,discount));
   }
-  const total=Math.round((subtotal-discount)*100);if(total<100)return out(400,{error:'Order total is too low for online payment'});
+  if(coupon&&discount<=0)return out(400,{error:'Coupon does not apply to this order'});const total=Math.round((subtotal-discount)*100);if(total<100)return out(400,{error:'Order total is too low for online payment'});
   const rz=new Razorpay({key_id:process.env.RAZORPAY_KEY_ID,key_secret:process.env.RAZORPAY_KEY_SECRET});
-  const order=await rz.orders.create({amount:total,currency:'INR',receipt:'cv_'+Date.now(),notes:{user_id:user.id,product_ids:buyable.map(p=>p.id).join(','),coupon:coupon||''}});
+  const receipt='cv_'+Date.now()+'_'+user.id.slice(0,6);const order=await rz.orders.create({amount:total,currency:'INR',receipt,notes:{user_id:user.id,product_ids:buyable.map(p=>p.id).join(','),coupon:coupon||'',subtotal:String(subtotal),discount:String(discount)}});
   return out(200,{orderId:order.id,amount:order.amount,currency:order.currency,keyId:process.env.RAZORPAY_KEY_ID,subtotal,discount,total:subtotal-discount});
  }catch(e){console.error('create-order failed',e);const msg=String(e?.error?.description||e?.description||e?.message||'').toLowerCase();if(msg.includes('authentication')||msg.includes('key')||msg.includes('unauthorized'))return out(502,{error:'Payment gateway credentials were rejected. Please refresh the Razorpay test key pair.'});return out(500,{error:'Unable to create payment order'})}
 };
