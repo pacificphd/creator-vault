@@ -11,7 +11,7 @@ exports.handler=async(event)=>{
   if(!admins.includes((user.email||'').toLowerCase()))return out(403,{error:'Admin access required'});
   const body=JSON.parse(event.body||'{}'), action=body.action;
   if(action==='product.create'){
-   const p=body.product||{}; if(!p.name||!p.slug||!Number(p.price))return out(400,{error:'Name, slug and price required'});
+   const p=body.product||{}; if(!p.name||!p.slug||!Number(p.price))return out(400,{error:'Name, slug and price required'}); if(Number(p.price)<=0)return out(400,{error:'Price must be greater than zero'});
    const {data,error:e}=await supabase.from('products').insert({name:p.name,slug:p.slug,description:p.description||'',price:Number(p.price),compare_price:Number(p.compare_price||p.price),compatibility:p.compatibility||'',file_size:p.file_size||'',active:p.active!==false,lifetime_updates:p.lifetime_updates!==false}).select().single();
    if(e)return out(400,{error:e.message}); return out(200,{product:data});
   }
@@ -21,7 +21,7 @@ exports.handler=async(event)=>{
   if(action==='product.update'){
    const p=body.product||{}; if(!body.id)return out(400,{error:'Product id required'});
    const patch={}; ['name','slug','description','compatibility','file_size'].forEach(k=>{if(p[k]!==undefined)patch[k]=p[k]});
-   if(p.price!==undefined)patch.price=Number(p.price); if(p.compare_price!==undefined)patch.compare_price=Number(p.compare_price);
+   if(p.price!==undefined){patch.price=Number(p.price);if(!Number.isFinite(patch.price)||patch.price<=0)return out(400,{error:'Price must be greater than zero'})} if(p.compare_price!==undefined){patch.compare_price=Number(p.compare_price);if(!Number.isFinite(patch.compare_price)||patch.compare_price<=0)return out(400,{error:'Compare price must be greater than zero'})}
    const {data,error:e}=await supabase.from('products').update(patch).eq('id',body.id).select().single();if(e)return out(400,{error:e.message});return out(200,{product:data});
   }
   if(action==='file.list'){
