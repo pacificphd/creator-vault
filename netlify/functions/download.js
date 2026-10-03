@@ -12,11 +12,13 @@ exports.handler=async(event)=>{
   const {data:purchase,error:purchaseError}=await supabase.from('purchases').select('id').eq('user_id',user.id).eq('product_id',productId).maybeSingle();
   if(purchaseError)return {statusCode:500,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({error:'Could not verify purchase'})};
   if(!purchase)return {statusCode:403,body:JSON.stringify({error:'This product is not owned by your account'})};
-  const {data:file}=await supabase.from('product_files').select('storage_path').eq('product_id',productId).eq('is_current',true).order('created_at',{ascending:false}).limit(1).maybeSingle();
+  const {data:file,error:fileError}=await supabase.from('product_files').select('storage_path').eq('product_id',productId).eq('is_current',true).order('created_at',{ascending:false}).limit(1).maybeSingle();
+  if(fileError)return {statusCode:500,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({error:'Could not load product file'})};
   if(!file)return {statusCode:404,body:JSON.stringify({error:'Product file is not available yet'})};
   const {data:signed,error:se}=await supabase.storage.from('paid-products').createSignedUrl(file.storage_path,120);
   if(se||!signed)return {statusCode:500,body:JSON.stringify({error:'Could not create secure download'})};
-  await supabase.from('download_events').insert({user_id:user.id,product_id:productId});
+  const {error:logError}=await supabase.from('download_events').insert({user_id:user.id,product_id:productId});
+  if(logError)console.error('download event log failed',logError.message);
   return {statusCode:200,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({url:signed.signedUrl})};
  }catch(e){return {statusCode:500,body:JSON.stringify({error:'Secure download error'})}}
 };
