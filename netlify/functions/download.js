@@ -20,5 +20,5 @@ exports.handler=async(event)=>{
   const {error:logError}=await supabase.from('download_events').insert({user_id:user.id,product_id:productId});
   if(logError)console.error('download event log failed',logError.message);
   return {statusCode:200,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({url:signed.signedUrl})};
- }catch(e){return {statusCode:500,body:JSON.stringify({error:'Secure download error'})}}
+ }catch(e){return {statusCode:500,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({error:'Secure download error'})}}
 };
