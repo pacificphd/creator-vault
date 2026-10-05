@@ -20,8 +20,10 @@ exports.handler=async(event)=>{
   }
   if(action==='product.update'){
    const p=body.product||{}; if(!body.id)return out(400,{error:'Product id required'});
+   const {data:current,error:ce}=await supabase.from('products').select('price,compare_price').eq('id',body.id).maybeSingle();if(ce)return out(400,{error:ce.message});if(!current)return out(404,{error:'Product not found'});
    const patch={}; ['name','slug','description','compatibility','file_size'].forEach(k=>{if(p[k]!==undefined)patch[k]=p[k]});
-   if(p.price!==undefined){patch.price=Number(p.price);if(!Number.isFinite(patch.price)||patch.price<=0)return out(400,{error:'Price must be greater than zero'})} if(p.compare_price!==undefined){patch.compare_price=Number(p.compare_price);if(!Number.isFinite(patch.compare_price)||patch.compare_price<=0)return out(400,{error:'Compare price must be greater than zero'})} if(patch.price!==undefined&&patch.compare_price!==undefined&&patch.compare_price<patch.price)return out(400,{error:'Compare price cannot be lower than price'})
+   if(p.price!==undefined){patch.price=Number(p.price);if(!Number.isFinite(patch.price)||patch.price<=0)return out(400,{error:'Price must be greater than zero'})} if(p.compare_price!==undefined){patch.compare_price=Number(p.compare_price);if(!Number.isFinite(patch.compare_price)||patch.compare_price<=0)return out(400,{error:'Compare price must be greater than zero'})}
+   const finalPrice=patch.price!==undefined?patch.price:Number(current.price),finalCompare=patch.compare_price!==undefined?patch.compare_price:Number(current.compare_price||current.price);if(finalCompare<finalPrice)return out(400,{error:'Compare price cannot be lower than price'});
    const {data,error:e}=await supabase.from('products').update(patch).eq('id',body.id).select().single();if(e)return out(400,{error:e.message});return out(200,{product:data});
   }
   if(action==='file.list'){
