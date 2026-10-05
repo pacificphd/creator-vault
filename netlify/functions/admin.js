@@ -10,6 +10,11 @@ exports.handler=async(event)=>{
   const admins=(process.env.ADMIN_EMAILS||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
   if(!admins.includes((user.email||'').toLowerCase()))return out(403,{error:'Admin access required'});
   const body=JSON.parse(event.body||'{}'), action=body.action;
+  if(action==='setup.ensure'){
+   const buckets=await supabase.storage.listBuckets();if(buckets.error)return out(400,{error:buckets.error.message});
+   if(!(buckets.data||[]).some(b=>b.name==='store-assets')){const cr=await supabase.storage.createBucket('store-assets',{public:true,fileSizeLimit:8388608,allowedMimeTypes:['image/jpeg','image/png','image/webp','image/gif']});if(cr.error)return out(400,{error:cr.error.message})}
+   return out(200,{ok:true,storeAssets:true});
+  }
   if(action==='product.create'){
    const p=body.product||{}; if(!p.name||!p.slug||!Number(p.price))return out(400,{error:'Name, slug and price required'});if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(p.slug)))return out(400,{error:'Slug must use lowercase letters, numbers and hyphens only'}); const price=Number(p.price),compare=Number(p.compare_price||p.price); if(!Number.isFinite(price)||price<=0)return out(400,{error:'Price must be greater than zero'}); if(!Number.isFinite(compare)||compare<price)return out(400,{error:'Compare price cannot be lower than price'});
    const {data,error:e}=await supabase.from('products').insert({name:p.name,slug:p.slug,description:p.description||'',price,compare_price:compare,compatibility:p.compatibility||'',file_size:p.file_size||'',active:p.active!==false,lifetime_updates:p.lifetime_updates!==false}).select().single();
