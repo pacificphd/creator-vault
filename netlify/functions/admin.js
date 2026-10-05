@@ -11,7 +11,7 @@ exports.handler=async(event)=>{
   if(!admins.includes((user.email||'').toLowerCase()))return out(403,{error:'Admin access required'});
   const body=JSON.parse(event.body||'{}'), action=body.action;
   if(action==='product.create'){
-   const p=body.product||{}; if(!p.name||!p.slug||!Number(p.price))return out(400,{error:'Name, slug and price required'}); const price=Number(p.price),compare=Number(p.compare_price||p.price); if(!Number.isFinite(price)||price<=0)return out(400,{error:'Price must be greater than zero'}); if(!Number.isFinite(compare)||compare<price)return out(400,{error:'Compare price cannot be lower than price'});
+   const p=body.product||{}; if(!p.name||!p.slug||!Number(p.price))return out(400,{error:'Name, slug and price required'});if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(p.slug)))return out(400,{error:'Slug must use lowercase letters, numbers and hyphens only'}); const price=Number(p.price),compare=Number(p.compare_price||p.price); if(!Number.isFinite(price)||price<=0)return out(400,{error:'Price must be greater than zero'}); if(!Number.isFinite(compare)||compare<price)return out(400,{error:'Compare price cannot be lower than price'});
    const {data,error:e}=await supabase.from('products').insert({name:p.name,slug:p.slug,description:p.description||'',price,compare_price:compare,compatibility:p.compatibility||'',file_size:p.file_size||'',active:p.active!==false,lifetime_updates:p.lifetime_updates!==false}).select().single();
    if(e)return out(400,{error:e.message}); return out(200,{product:data});
   }
@@ -21,7 +21,7 @@ exports.handler=async(event)=>{
   if(action==='product.update'){
    const p=body.product||{}; if(!body.id)return out(400,{error:'Product id required'});
    const {data:current,error:ce}=await supabase.from('products').select('price,compare_price').eq('id',body.id).maybeSingle();if(ce)return out(400,{error:ce.message});if(!current)return out(404,{error:'Product not found'});
-   const patch={}; ['name','slug','description','compatibility','file_size'].forEach(k=>{if(p[k]!==undefined)patch[k]=p[k]});
+   const patch={}; ['name','slug','description','compatibility','file_size'].forEach(k=>{if(p[k]!==undefined)patch[k]=String(p[k]).trim()});if(p.slug!==undefined&&!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(patch.slug))return out(400,{error:'Slug must use lowercase letters, numbers and hyphens only'});if(p.name!==undefined&&!patch.name)return out(400,{error:'Product name cannot be empty'});
    if(p.price!==undefined){patch.price=Number(p.price);if(!Number.isFinite(patch.price)||patch.price<=0)return out(400,{error:'Price must be greater than zero'})} if(p.compare_price!==undefined){patch.compare_price=Number(p.compare_price);if(!Number.isFinite(patch.compare_price)||patch.compare_price<=0)return out(400,{error:'Compare price must be greater than zero'})}
    const finalPrice=patch.price!==undefined?patch.price:Number(current.price),finalCompare=patch.compare_price!==undefined?patch.compare_price:Number(current.compare_price||current.price);if(finalCompare<finalPrice)return out(400,{error:'Compare price cannot be lower than price'});
    const {data,error:e}=await supabase.from('products').update(patch).eq('id',body.id).select().single();if(e)return out(400,{error:e.message});return out(200,{product:data});
@@ -32,10 +32,11 @@ exports.handler=async(event)=>{
   if(action==='file.link'){
    if(!body.productId||!body.storagePath)return out(400,{error:'Product and storage path required'}); const safePath=String(body.storagePath).trim(); if(!safePath||safePath.startsWith('/')||safePath.includes('..')||safePath.includes('://'))return out(400,{error:'Enter a valid private storage object path'});
    await supabase.from('product_files').update({is_current:false}).eq('product_id',body.productId);
-   const {data,error:e}=await supabase.from('product_files').insert({product_id:body.productId,version:body.version||'1.0',storage_path:safePath,is_current:true}).select().single();if(e)return out(400,{error:e.message});return out(200,{file:data});
+   const {data:objects,error:oe}=await supabase.storage.from('paid-products').list(safePath.includes('/')?safePath.slice(0,safePath.lastIndexOf('/')):'',{search:safePath.split('/').pop(),limit:10});if(oe)return out(400,{error:'Could not verify private file'});if(!(objects||[]).some(o=>o.name===safePath.split('/').pop()))return out(404,{error:'Private storage file was not found'});
+   const {data,error:e}=await supabase.from('product_files').insert({product_id:body.productId,version:String(body.version||'1.0').trim().slice(0,50),storage_path:safePath,is_current:true}).select().single();if(e)return out(400,{error:e.message});return out(200,{file:data});
   }
   if(action==='setting.save'){
-   if(!body.key)return out(400,{error:'Setting key required'});
+   const allowedSettings=new Set(['offer_bar','hero_banners']);if(!allowedSettings.has(String(body.key||'')))return out(400,{error:'Unsupported store setting'});
    const {data,error:e}=await supabase.from('store_settings').upsert({key:body.key,value:String(body.value??'')},{onConflict:'key'}).select().single();
    if(e)return out(400,{error:e.message});return out(200,{setting:data});
   }
