@@ -15,6 +15,12 @@ exports.handler=async(event)=>{
    const {data,error:e}=await supabase.from('products').insert({name:p.name,slug:p.slug,description:p.description||'',price,compare_price:compare,compatibility:p.compatibility||'',file_size:p.file_size||'',active:p.active!==false,lifetime_updates:p.lifetime_updates!==false}).select().single();
    if(e)return out(400,{error:e.message}); return out(200,{product:data});
   }
+  if(action==='product.delete'){
+   if(!body.id)return out(400,{error:'Product id required'});const owned=await supabase.from('purchases').select('id',{count:'exact',head:true}).eq('product_id',body.id);if(owned.error)return out(400,{error:owned.error.message});if((owned.count||0)>0)return out(409,{error:'Purchased products cannot be deleted. Hide the product instead.'});await supabase.from('product_files').delete().eq('product_id',body.id);const {error:e}=await supabase.from('products').delete().eq('id',body.id);if(e)return out(400,{error:e.message});return out(200,{ok:true});
+  }
+  if(action==='category.list'){const {data,error:e}=await supabase.from('categories').select('id,name,slug').order('name');if(e)return out(400,{error:e.message});return out(200,{categories:data||[]})}
+  if(action==='category.save'){const name=String(body.name||'').trim(),slug=String(body.slug||'').trim().toLowerCase();if(!name||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))return out(400,{error:'Valid category name and slug required'});const {data,error:e}=await supabase.from('categories').upsert({name,slug},{onConflict:'slug'}).select().single();if(e)return out(400,{error:e.message});return out(200,{category:data})}
+  if(action==='category.delete'){if(!body.id)return out(400,{error:'Category id required'});const used=await supabase.from('products').select('id',{count:'exact',head:true}).eq('category_id',body.id);if(!used.error&&(used.count||0)>0)return out(409,{error:'Move or remove products from this category first'});const {error:e}=await supabase.from('categories').delete().eq('id',body.id);if(e)return out(400,{error:e.message});return out(200,{ok:true})}
   if(action==='product.toggle'){
    const {error:e}=await supabase.from('products').update({active:!!body.active}).eq('id',body.id);if(e)return out(400,{error:e.message});return out(200,{ok:true});
   }
