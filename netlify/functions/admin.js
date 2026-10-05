@@ -78,7 +78,9 @@ exports.handler=async(event)=>{
    return out(200,{customers});
   }
   if(action==='orders.list'){
-   const {data,error:e}=await supabase.from('purchases').select('*').order('granted_at',{ascending:false}).limit(100);if(e)return out(400,{error:e.message});return out(200,{orders:data});
+   const {data,error:e}=await supabase.from('purchases').select('id,user_id,product_id,granted_at,products(name)').order('granted_at',{ascending:false}).limit(100);if(e)return out(400,{error:e.message});
+   const {data:users,error:ue}=await supabase.auth.admin.listUsers({page:1,perPage:1000});if(ue)return out(400,{error:ue.message});const emails=new Map((users.users||[]).map(u=>[u.id,u.email||'Unknown']));
+   return out(200,{orders:(data||[]).map(o=>({...o,product_name:o.products?.name||o.product_id,user_email:emails.get(o.user_id)||'Unknown'}))});
   }
   return out(400,{error:'Unknown action'});
  }catch(e){return out(500,{error:'Admin operation failed'})}
