@@ -208,10 +208,16 @@ function money(n){return '₹'+Number(n||0).toLocaleString('en-IN')}function esc
 }
 async function googleLogin(){
  if(!db)return;
+ const st=document.getElementById('accountStatus');if(st)st.textContent='Opening Google sign-in…';
  try{localStorage.setItem('cv-auth-pending','1');localStorage.removeItem('cv-auth-debug')}catch(e){}
- const {data,error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/',queryParams:{prompt:'select_account'}}});
- if(error){authDebug.startError=error.message;document.getElementById('accountStatus').textContent='Google login needs provider setup: '+error.message}
- else authDebug.authorizeUrlHost=(()=>{try{return new URL(data?.url||'').host}catch(e){return null}})();
+ try{
+  const redirectTo=location.origin+location.pathname;
+  const {data,error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo,skipBrowserRedirect:true,queryParams:{prompt:'select_account'}}});
+  if(error)throw error;
+  if(!data?.url)throw new Error('Google sign-in URL was not returned');
+  authDebug.authorizeUrlHost=(()=>{try{return new URL(data.url).host}catch(e){return null}})();
+  window.location.assign(data.url);
+ }catch(e){authDebug.startError=e.message;if(st)st.textContent='Google login error: '+e.message}
 }
 async function logout(){if(db){await db.auth.signOut({scope:'local'});location.replace(location.origin)}}
 async function secureDownload(productId){
