@@ -32,8 +32,14 @@ exports.handler=async(event)=>{
   const metaRes=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'?fields=id,name,mimeType,size&supportsAllDrives=true',{headers:{Authorization:'Bearer '+access}});
   if(!metaRes.ok)return out(404,{error:'Google Drive product file could not be accessed'});const meta=await metaRes.json();
   if(!user.email)return out(400,{error:'Account email required'});
-  const pr=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'/permissions?supportsAllDrives=true&sendNotificationEmail=false',{method:'POST',headers:{Authorization:'Bearer '+access,'Content-Type':'application/json'},body:JSON.stringify({type:'user',role:'reader',emailAddress:user.email})});
-  if(!pr.ok&&pr.status!==409)return out(502,{error:'Could not grant file access'});
+  const email=String(user.email).trim().toLowerCase();
+  const lp=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'/permissions?supportsAllDrives=true&fields=permissions(id,type,emailAddress,role)',{headers:{Authorization:'Bearer '+access}});
+  if(!lp.ok)return out(502,{error:'Could not verify Google Drive file access'});
+  const pj=await lp.json(),hasAccess=(pj.permissions||[]).some(p=>p.type==='user'&&String(p.emailAddress||'').toLowerCase()===email&&['reader','commenter','writer','fileOrganizer','organizer','owner'].includes(p.role));
+  if(!hasAccess){
+   const pr=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'/permissions?supportsAllDrives=true&sendNotificationEmail=false',{method:'POST',headers:{Authorization:'Bearer '+access,'Content-Type':'application/json'},body:JSON.stringify({type:'user',role:'reader',emailAddress:user.email})});
+   if(!pr.ok)return out(502,{error:'Could not grant file access'});
+  }
   const {error:logError}=await supabase.from('download_events').insert({user_id:user.id,product_id:productId});if(logError)console.error('download event log failed',logError.message);
   return out(200,{url:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(meta.id),fileName:meta.name});
  }catch(e){console.error('secure download error',e.message);return out(500,{error:'Secure download error'})}
