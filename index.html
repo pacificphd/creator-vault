@@ -230,7 +230,12 @@ async function secureDownload(productId){
   const res=await fetch('/.netlify/functions/download',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({productId})});
   const out=await res.json();
   if(!res.ok)throw new Error(out.error||'Download unavailable');
-  window.location.assign(out.url);
+  if(out.driveDownload&&out.fileId){
+   const dl=await fetch('/.netlify/functions/drive-file?fileId='+encodeURIComponent(out.fileId),{headers:{'Authorization':'Bearer '+session.access_token}});
+   if(!dl.ok){let e={};try{e=await dl.json()}catch(_){ }throw new Error(e.error||'Drive download unavailable')}
+   const blob=await dl.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=out.fileName||'creator-vault-download';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }else if(out.url)window.location.assign(out.url);
+  else throw new Error('Download unavailable');
  }catch(e){alert(e.message)}finally{if(st)st.textContent='Signed in. Your secure downloads are available from My Downloads.'}
 }
 async function loadDownloads(){
