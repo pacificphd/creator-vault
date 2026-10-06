@@ -44,8 +44,12 @@ exports.handler=async(event)=>{
    if(!body.productId||!body.storagePath)return out(400,{error:'Product and Google Drive File ID required'});
    const fileId=String(body.storagePath).trim();
    if(!/^[A-Za-z0-9_-]{10,200}$/.test(fileId))return out(400,{error:'Enter a valid Google Drive File ID'});
-   await supabase.from('product_files').update({is_current:false}).eq('product_id',body.productId);
-   const {data,error:e}=await supabase.from('product_files').insert({product_id:body.productId,version:String(body.version||'1.0').trim().slice(0,50),storage_path:fileId,is_current:true}).select().single();
+   const row={product_id:body.productId,version:String(body.version||'1.0').trim().slice(0,50),storage_path:fileId,is_current:false};
+   const {data:newFile,error:insertError}=await supabase.from('product_files').insert(row).select().single();
+   if(insertError)return out(400,{error:insertError.message});
+   const {error:clearError}=await supabase.from('product_files').update({is_current:false}).eq('product_id',body.productId).neq('id',newFile.id);
+   if(clearError){await supabase.from('product_files').delete().eq('id',newFile.id);return out(400,{error:'Could not switch current product file'});}
+   const {data,error:e}=await supabase.from('product_files').update({is_current:true}).eq('id',newFile.id).select().single();
    if(e)return out(400,{error:e.message});return out(200,{file:data});
   }
   if(action==='setting.save'){
