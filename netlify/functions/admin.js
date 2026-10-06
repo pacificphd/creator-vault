@@ -25,6 +25,10 @@ exports.handler=async(event)=>{
    const {error:e}=await supabase.storage.from('site-assets').upload(path,bytes,{contentType:mime,upsert:false,cacheControl:'3600'});if(e)return out(400,{error:e.message});
    const {data:pub}=supabase.storage.from('site-assets').getPublicUrl(path);return out(200,{path,url:pub.publicUrl});
   }
+  if(action==='asset.delete'){
+   const path=String(body.path||'').trim();if(!/^(banners|thumbnails)\/[A-Za-z0-9._ -]+$/.test(path))return out(400,{error:'Invalid asset path'});
+   const {error:e}=await supabase.storage.from('site-assets').remove([path]);if(e)return out(400,{error:e.message});return out(200,{ok:true});
+  }
   if(action==='product.create'){
    const p=body.product||{}; if(!p.name||!p.slug||!Number(p.price)||!p.category_id)return out(400,{error:'Name, slug, price and category required'});if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(p.slug)))return out(400,{error:'Slug must use lowercase letters, numbers and hyphens only'}); const price=Number(p.price),compare=Number(p.compare_price||p.price); if(!Number.isFinite(price)||price<=0)return out(400,{error:'Price must be greater than zero'}); if(!Number.isFinite(compare)||compare<price)return out(400,{error:'Compare price cannot be lower than price'});
    const {data:cat,error:catErr}=await supabase.from('categories').select('id').eq('id',p.category_id).maybeSingle();if(catErr||!cat)return out(400,{error:'Select a valid category'}); const {data,error:e}=await supabase.from('products').insert({name:p.name,slug:p.slug,description:p.description||'',price,compare_price:compare,compatibility:p.compatibility||'',file_size:p.file_size||'',category_id:p.category_id,active:p.active!==false,lifetime_updates:p.lifetime_updates!==false}).select().single();
