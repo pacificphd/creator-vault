@@ -9,7 +9,7 @@ async function googleAccessToken(){
  const key=rawKey.replace(/\\n/g,'\n');
  const now=Math.floor(Date.now()/1000);
  const header=b64url(JSON.stringify({alg:'RS256',typ:'JWT'}));
- const claim=b64url(JSON.stringify({iss:email,scope:'https://www.googleapis.com/auth/drive.readonly',aud:'https://oauth2.googleapis.com/token',iat:now,exp:now+3600}));
+ const claim=b64url(JSON.stringify({iss:email,scope:'https://www.googleapis.com/auth/drive',aud:'https://oauth2.googleapis.com/token',iat:now,exp:now+3600}));
  const signer=crypto.createSign('RSA-SHA256');signer.update(header+'.'+claim);signer.end();
  const assertion=header+'.'+claim+'.'+signer.sign(key,'base64').replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
  const body=new URLSearchParams({grant_type:'urn:ietf:params:oauth:grant-type:jwt-bearer',assertion});
@@ -31,7 +31,10 @@ exports.handler=async(event)=>{
   const access=await googleAccessToken();
   const metaRes=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'?fields=id,name,mimeType,size&supportsAllDrives=true',{headers:{Authorization:'Bearer '+access}});
   if(!metaRes.ok)return out(404,{error:'Google Drive product file could not be accessed'});const meta=await metaRes.json();
+  if(!user.email)return out(400,{error:'Account email required'});
+  const pr=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'/permissions?supportsAllDrives=true&sendNotificationEmail=false',{method:'POST',headers:{Authorization:'Bearer '+access,'Content-Type':'application/json'},body:JSON.stringify({type:'user',role:'reader',emailAddress:user.email})});
+  if(!pr.ok&&pr.status!==409)return out(502,{error:'Could not grant file access'});
   const {error:logError}=await supabase.from('download_events').insert({user_id:user.id,product_id:productId});if(logError)console.error('download event log failed',logError.message);
-  return out(200,{driveDownload:true,fileId:meta.id,fileName:meta.name});
+  return out(200,{url:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(meta.id),fileName:meta.name});
  }catch(e){console.error('secure download error',e.message);return out(500,{error:'Secure download error'})}
 };
