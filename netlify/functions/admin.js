@@ -67,7 +67,7 @@ exports.handler=async(event)=>{
    if(e)return out(400,{error:e.message});return out(200,{file:data});
   }
   if(action==='setting.save'){
-   const allowedSettings=new Set(['offer_bar','hero_banners']);if(!allowedSettings.has(String(body.key||'')))return out(400,{error:'Unsupported store setting'});
+   const allowedSettings=new Set(['offer_bar','hero_banners','product_demos','whatsapp_support','instagram_url']);if(!allowedSettings.has(String(body.key||'')))return out(400,{error:'Unsupported store setting'});
    const {data,error:e}=await supabase.from('store_settings').upsert({key:body.key,value:String(body.value??'')},{onConflict:'key'}).select().single();
    if(e)return out(400,{error:e.message});return out(200,{setting:data});
   }
