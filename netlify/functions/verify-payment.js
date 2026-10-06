@@ -21,10 +21,21 @@ exports.handler=async event=>{
   const notes=order.notes||{};if(String(notes.user_id||'')!==user.id)return out(403,{error:'Payment does not belong to this account'});
   if(String(order.currency||'')!=='INR')return out(400,{error:'Unexpected payment currency'});
   const ids=String(notes.product_ids||'').split(',').map(x=>x.trim()).filter(Boolean);if(!ids.length)return out(400,{error:'Order has no products'});
-  const {data:products,error:pe0}=await supabase.from('products').select('id').in('id',ids);if(pe0||!products||products.length!==ids.length)return out(400,{error:'Order products could not be verified'});
+  const {data:products,error:pe0}=await supabase.from('products').select('id,name,price').in('id',ids);if(pe0||!products||products.length!==ids.length)return out(400,{error:'Order products could not be verified'});
   const {data:owned,error:oe}=await supabase.from('purchases').select('product_id').eq('user_id',user.id).in('product_id',ids);if(oe)return out(500,{error:'Could not verify existing purchases'});
   const have=new Set((owned||[]).map(x=>String(x.product_id))),missing=ids.filter(id=>!have.has(String(id)));
   if(missing.length){const rows=missing.map(product_id=>({user_id:user.id,product_id}));const {error:pe}=await supabase.from('purchases').upsert(rows,{onConflict:'user_id,product_id',ignoreDuplicates:true});if(pe)return out(500,{error:'Payment verified but purchase access could not be granted'})}
-  return out(200,{ok:true,paymentId:b.razorpay_payment_id,granted:ids.length});
+  let emailSent=false;
+  try{
+   if(process.env.RESEND_API_KEY&&user.email){
+    const names=(products||[]).map(p=>p.name).join(', ');
+    const total=(Number(order.amount||0)/100).toLocaleString('en-IN',{style:'currency',currency:'INR'});
+    const site=String(process.env.URL||'').replace(/\/$/,'');
+    const html='<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#171714"><h2>Payment successful</h2><p>Thank you for your Creator Vault purchase.</p><p><b>Products:</b> '+names.replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]))+'<br><b>Amount:</b> '+total+'<br><b>Payment ID:</b> '+String(b.razorpay_payment_id).replace(/[&<>"]/g,'')+'</p><p>Your purchased products are linked to this account. Open Creator Vault and go to <b>My Downloads</b> to access them.</p>'+(site?'<p><a href="'+site+'" style="display:inline-block;padding:12px 18px;background:#171714;color:white;text-decoration:none;border-radius:999px">Open Creator Vault</a></p>':'')+'<p style="color:#70695f;font-size:12px">Keep this email for your payment reference.</p></div>';
+    const er=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:process.env.ORDER_EMAIL_FROM||'Creator Vault <onboarding@resend.dev>',to:[user.email],subject:'Creator Vault — Payment successful',html})});
+    emailSent=er.ok;
+   }
+  }catch(e){}
+  return out(200,{ok:true,paymentId:b.razorpay_payment_id,granted:ids.length,emailSent});
  }catch(e){return out(500,{error:'Payment verification failed'})}
 };
