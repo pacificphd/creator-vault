@@ -41,9 +41,8 @@ exports.handler=async(event)=>{
    const {data,error:e}=await supabase.from('product_files').select('id,product_id,version,storage_path,is_current,created_at').eq('product_id',body.productId).order('created_at',{ascending:false});if(e)return out(400,{error:e.message});return out(200,{files:data});
   }
   if(action==='file.link'){
-   if(!body.productId||!body.storagePath)return out(400,{error:'Product and storage path required'}); const safePath=String(body.storagePath).trim(); if(!safePath||safePath.startsWith('/')||safePath.includes('..')||safePath.includes('://'))return out(400,{error:'Enter a valid private storage object path'});
+   if(!body.productId||!body.storagePath)return out(400,{error:'Product and Google Drive File ID required'}); const safePath=String(body.storagePath).trim(); if(!/^[A-Za-z0-9_-]{10,200}$/.test(safePath))return out(400,{error:'Enter only the Google Drive File ID, not the full link'});
    await supabase.from('product_files').update({is_current:false}).eq('product_id',body.productId);
-   const {data:objects,error:oe}=await supabase.storage.from('paid-products').list(safePath.includes('/')?safePath.slice(0,safePath.lastIndexOf('/')):'',{search:safePath.split('/').pop(),limit:10});if(oe)return out(400,{error:'Could not verify private file'});if(!(objects||[]).some(o=>o.name===safePath.split('/').pop()))return out(404,{error:'Private storage file was not found'});
    const {data,error:e}=await supabase.from('product_files').insert({product_id:body.productId,version:String(body.version||'1.0').trim().slice(0,50),storage_path:safePath,is_current:true}).select().single();if(e)return out(400,{error:e.message});return out(200,{file:data});
   }
   if(action==='setting.save'){
