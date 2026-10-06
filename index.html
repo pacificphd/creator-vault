@@ -34,7 +34,7 @@ const THUMB_BY_NAME={
 };
 function publicAssetUrl(folder,path){if(!path)return'';if(/^https?:\/\//i.test(path))return path;let p=String(path).replace(/^\/+/, '');if(p.startsWith('thumbnails/')||p.startsWith('banners/'))return 'https://bxvmyojiidgqnrmriimr.supabase.co/storage/v1/object/public/site-assets/'+p.split('/').map(encodeURIComponent).join('/');return 'https://bxvmyojiidgqnrmriimr.supabase.co/storage/v1/object/public/site-assets/'+folder+'/'+p.split('/').map(encodeURIComponent).join('/')}
 function fallbackThumb(name){const f=THUMB_BY_NAME[name];return f?publicAssetUrl('thumbnails',f):''}
-const DEFAULT_BANNERS=['Premium Digital Assets.png','Wedding LUTs Showcase.png','AI Prompt Packs Banner.png','Wedding Templates.png','Premiere Pro Reel Projects.png','Premium Creative Assets.png'];
+const DEFAULT_BANNERS=['Premium Digital Assets copy.png','Wedding LUTs Showcase copy.png','AI Prompt Packs Banner copy.png','Wedding Templates copy.png','Premiere Pro Reel Projects copy.png','Premium Creative Assets copy.png'];
 function applyDefaultBanners(){const track=document.getElementById('heroTrack'),dots=document.querySelector('.dots');if(!track||!dots)return;track.innerHTML=DEFAULT_BANNERS.map(f=>'<section class="hero bannerImage" style="background-image:url(&quot;'+publicAssetUrl('banners',f)+'&quot;)"><div></div></section>').join('');dots.innerHTML=DEFAULT_BANNERS.map((_,i)=>'<button class="dot '+(i===0?'on':'')+'" onclick="heroGo('+i+')"></button>').join('')}
 
 let cart=JSON.parse(localStorage.getItem('cv-cart')||'[]');
