@@ -172,12 +172,12 @@ async function adminSaveCoupon(){const code=document.getElementById('acCode').va
 async function adminLoadFiles(){
  const box=document.getElementById('afHistory'),sel=document.getElementById('afProduct');if(!box||!sel)return;
  box.innerHTML='<p>Loading file history…</p>';
- try{const j=await adminApi('file.list',{productId:sel.value});const rows=j.files||[];box.innerHTML='<h3>Version History</h3><table class="adminTable"><tr><th>Version</th><th>Storage path</th><th>Status</th></tr>'+(rows.map(f=>'<tr><td>'+esc(f.version)+'</td><td>'+esc(f.storage_path)+'</td><td>'+(f.is_current?'<b>Current</b>':'Previous')+'</td></tr>').join('')||'<tr><td colspan="3">No files linked yet</td></tr>')+'</table>'}catch(e){box.innerHTML='<p>'+e.message+'</p>'}
+ try{const j=await adminApi('file.list',{productId:sel.value});const rows=j.files||[];box.innerHTML='<h3>Version History</h3><table class="adminTable"><tr><th>Version</th><th>Google Drive File ID</th><th>Status</th></tr>'+(rows.map(f=>'<tr><td>'+esc(f.version)+'</td><td>'+esc(f.storage_path)+'</td><td>'+(f.is_current?'<b>Current</b>':'Previous')+'</td></tr>').join('')||'<tr><td colspan="3">No files linked yet</td></tr>')+'</table>'}catch(e){box.innerHTML='<p>'+e.message+'</p>'}
 }
 async function adminLinkFile(){
  const productId=document.getElementById('afProduct').value,storagePath=document.getElementById('afPath').value.trim(),version=document.getElementById('afVersion').value.trim()||'1.0';
- if(!storagePath){alert('Storage path is required.');return}
- try{await adminApi('file.link',{productId,storagePath,version});document.getElementById('afResult').innerHTML='<div class="spec"><b>Linked successfully</b><p>'+storagePath+' is now the current secure file.</p></div>'}catch(e){alert(e.message)}
+ if(!storagePath){alert('Google Drive File ID is required.');return}
+ try{await adminApi('file.link',{productId,storagePath,version});document.getElementById('afResult').innerHTML='<div class="spec"><b>Drive file linked successfully</b><p>This product now uses Google Drive file ID: '+esc(storagePath)+'</p></div>'}catch(e){alert(e.message)}
 }
 async function requireLoginForCheckout(){
  if(!db){alert('Secure login is temporarily unavailable.');return false}
