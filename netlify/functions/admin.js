@@ -94,12 +94,23 @@ exports.handler=async(event)=>{
    const {data,error:e}=await supabase.from('coupons').upsert(row,{onConflict:'code'}).select().single();if(e)return out(400,{error:e.message});return out(200,{coupon:data});
   }
   if(action==='analytics.summary'){
-   const [p,o,d]=await Promise.all([
-    supabase.from('products').select('id',{count:'exact',head:true}),
-    supabase.from('purchases').select('id',{count:'exact',head:true}),
+   const [pr,pu,d]=await Promise.all([
+    supabase.from('products').select('id,name,price,active'),
+    supabase.from('purchases').select('id,product_id,granted_at'),
     supabase.from('download_events').select('id',{count:'exact',head:true})
    ]);
-   return out(200,{products:p.count||0,orders:o.count||0,downloads:d.count||0});
+   if(pr.error||pu.error)return out(400,{error:'Analytics could not be loaded'});
+   const products=pr.data||[],purchases=pu.data||[],byId=new Map(products.map(x=>[String(x.id),x])),now=Date.now();
+   const stats=days=>{const since=now-days*86400000,rows=purchases.filter(x=>new Date(x.granted_at||0).getTime()>=since);return{sales:rows.length,revenue:rows.reduce((s,x)=>s+Number(byId.get(String(x.product_id))?.price||0),0)}};
+   const counts={};for(const x of purchases)counts[x.product_id]=(counts[x.product_id]||0)+1;
+   const best=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0],bestProduct=best?{name:byId.get(String(best[0]))?.name||'Unknown',sales:best[1]}:null;
+   return out(200,{products:products.length,activeProducts:products.filter(x=>x.active).length,orders:purchases.length,downloads:d.count||0,today:stats(1),days7:stats(7),days30:stats(30),bestProduct});
+  }
+  if(action==='backup.export'){
+   const tables=['products','categories','product_files','purchases','coupons','store_settings'];
+   const backup={version:1,created_at:new Date().toISOString(),tables:{}};
+   for(const table of tables){const {data,error:e}=await supabase.from(table).select('*');if(e)return out(400,{error:'Backup failed for '+table});backup.tables[table]=data||[]}
+   return out(200,{backup});
   }
   if(action==='customers.list'){
    const {data:orders,error:e}=await supabase.from('purchases').select('user_id,granted_at');if(e)return out(400,{error:e.message});
