@@ -17,7 +17,7 @@ exports.handler=async(event)=>{
   }
   if(action==='product.create'){
    const p=body.product||{}; if(!p.name||!p.slug||!Number(p.price))return out(400,{error:'Name, slug and price required'});if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(p.slug)))return out(400,{error:'Slug must use lowercase letters, numbers and hyphens only'}); const price=Number(p.price),compare=Number(p.compare_price||p.price); if(!Number.isFinite(price)||price<=0)return out(400,{error:'Price must be greater than zero'}); if(!Number.isFinite(compare)||compare<price)return out(400,{error:'Compare price cannot be lower than price'});
-   const {data,error:e}=await supabase.from('products').insert({name:p.name,slug:p.slug,description:p.description||'',price,compare_price:compare,compatibility:p.compatibility||'',file_size:p.file_size||'',active:p.active!==false,lifetime_updates:p.lifetime_updates!==false}).select().single();
+   const {data,error:e}=await supabase.from('products').insert({name:p.name,slug:p.slug,description:p.description||'',price,compare_price:compare,compatibility:p.compatibility||'',file_size:p.file_size||'',category_id:p.category_id||null,active:p.active!==false,lifetime_updates:p.lifetime_updates!==false}).select().single();
    if(e)return out(400,{error:e.message}); return out(200,{product:data});
   }
   if(action==='product.delete'){
