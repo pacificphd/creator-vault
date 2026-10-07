@@ -37,7 +37,7 @@ function fallbackThumb(name){const f=THUMB_BY_NAME[name];return f?publicAssetUrl
 const DEFAULT_BANNERS=[['Premium Digital Assets copy.png','all'],['Wedding LUTs Showcase copy.png','wedding lut'],['AI Prompt Packs Banner copy.png','ai prompt'],['Wedding Templates copy.png','invitation'],['Premiere Pro Reel Projects copy.png','premiere'],['Premium Creative Assets copy.png','all']];
 function applyDefaultBanners(){const track=document.getElementById('heroTrack'),dots=document.querySelector('.dots');if(!track||!dots)return;track.innerHTML=DEFAULT_BANNERS.map(([f,target])=>'<section class="hero bannerImage" role="button" tabindex="0" style="background-image:url(&quot;'+publicAssetUrl('banners',f)+'&quot;);cursor:pointer" onclick="openBannerTarget(\''+target+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openBannerTarget(\''+target+'\')}"><div></div></section>').join('');dots.innerHTML=DEFAULT_BANNERS.map((_,i)=>'<button class="dot '+(i===0?'on':'')+'" onclick="heroGo('+i+')"></button>').join('')}
 
-let cart=JSON.parse(localStorage.getItem('cv-cart')||'[]');
+let cart=[];try{const savedCart=JSON.parse(localStorage.getItem('cv-cart')||'[]');cart=Array.isArray(savedCart)?savedCart.map(String):[]}catch(e){cart=[];try{localStorage.removeItem('cv-cart')}catch(_){}}
 let db=null;
 const authDebug={startedAt:new Date().toISOString(),href:location.origin+location.pathname,origin:location.origin,path:location.pathname,hashKeys:[],queryKeys:[],events:[],sdk:window.supabase?'loaded':'missing'};
 try{
