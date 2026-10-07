@@ -12,8 +12,8 @@ exports.handler=async(event)=>{
   const body=JSON.parse(event.body||'{}'), action=body.action;
   if(action==='setup.ensure'){
    const buckets=await supabase.storage.listBuckets();if(buckets.error)return out(400,{error:buckets.error.message});
-   if(!(buckets.data||[]).some(b=>b.name==='store-assets')){const cr=await supabase.storage.createBucket('store-assets',{public:true,fileSizeLimit:8388608,allowedMimeTypes:['image/jpeg','image/png','image/webp','image/gif']});if(cr.error)return out(400,{error:cr.error.message})}
-   return out(200,{ok:true,storeAssets:true});
+   if(!(buckets.data||[]).some(b=>b.name==='site-assets')){const cr=await supabase.storage.createBucket('site-assets',{public:true,fileSizeLimit:8388608,allowedMimeTypes:['image/jpeg','image/png','image/webp','image/gif']});if(cr.error)return out(400,{error:cr.error.message})}
+   return out(200,{ok:true,siteAssets:true});
   }
   if(action==='asset.upload'){
    const folder=String(body.folder||'').trim();if(!['banners','thumbnails'].includes(folder))return out(400,{error:'Unsupported asset folder'});
