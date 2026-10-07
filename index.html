@@ -84,7 +84,7 @@ async function loadStore(){
    products.splice(0,products.length,...data.map((p,i)=>({id:p.id,cat:p.categories?.name||'Assets',name:p.name,price:p.price,old:p.compare_price||p.price,qty:'Digital Asset',format:'Digital Download',compat:p.compatibility||'See product details',size:p.file_size||'Digital',desc:p.description||'',inc:'Digital files and product documentation',cls:i%3===1?'light':i%3===2?'blue':'',thumb:(p.thumbnail_path&&(/^https?:\/\//i.test(p.thumbnail_path)||String(p.thumbnail_path).startsWith('thumbnails/')))?publicAssetUrl('thumbnails',p.thumbnail_path):fallbackThumb(p.name)})));
    render();renderCart();
    const productRef=new URLSearchParams(window.location.search).get('product');
-   if(productRef){window.setTimeout(function(){openProduct(productRef)},0)}
+   if(productRef&&products.some(function(p){return String(p.id)===String(productRef)})){window.setTimeout(function(){openProduct(productRef)},0)}
   }
  }catch(e){console.warn('Using storefront fallback products:',e.message)}
 }
