@@ -90,8 +90,12 @@ exports.handler=async(event)=>{
   }
   if(action==='coupon.save'){
    const c=body.coupon||{};if(!c.code||!Number(c.value))return out(400,{error:'Coupon code and value required'});
-   const type=c.discount_type==='fixed'?'fixed':'percent',val=Number(c.value);if(type==='percent'&&(val<=0||val>100))return out(400,{error:'Percent discount must be between 1 and 100'});if(type==='fixed'&&val<=0)return out(400,{error:'Fixed discount must be greater than zero'});const row={code:String(c.code).trim().toUpperCase(),discount_type:type,value:val,active:c.active!==false,expires_at:c.expires_at||null};
+   const code=String(c.code).trim().toUpperCase(),type=c.discount_type==='fixed'?'fixed':'percent',val=Number(c.value);if(type==='percent'&&(val<=0||val>100))return out(400,{error:'Percent discount must be between 0 and 100'});if(type==='fixed'&&val<=0)return out(400,{error:'Fixed discount must be greater than zero'});const row={code,discount_type:type,value:val,active:c.active!==false,expires_at:c.expires_at||null},original=String(body.originalCode||'').trim().toUpperCase();
+   if(original&&original!==code){const {error:ue}=await supabase.from('coupons').update(row).eq('code',original);if(ue)return out(400,{error:ue.message});const {data,error:re}=await supabase.from('coupons').select('*').eq('code',code).single();if(re)return out(400,{error:re.message});return out(200,{coupon:data});}
    const {data,error:e}=await supabase.from('coupons').upsert(row,{onConflict:'code'}).select().single();if(e)return out(400,{error:e.message});return out(200,{coupon:data});
+  }
+  if(action==='coupon.delete'){
+   const code=String(body.code||'').trim().toUpperCase();if(!code)return out(400,{error:'Coupon code required'});const {error:e}=await supabase.from('coupons').delete().eq('code',code);if(e)return out(400,{error:e.message});return out(200,{ok:true});
   }
   if(action==='analytics.summary'){
    const [pr,pu,d]=await Promise.all([
