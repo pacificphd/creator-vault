@@ -98,14 +98,15 @@ exports.handler=async(event)=>{
    const code=String(body.code||'').trim().toUpperCase();if(!code)return out(400,{error:'Coupon code required'});const {error:e}=await supabase.from('coupons').delete().eq('code',code);if(e)return out(400,{error:e.message});return out(200,{ok:true});
   }
   if(action==='analytics.summary'){
-   const [pr,pu,d]=await Promise.all([
+   const [pr,pu,d,ord]=await Promise.all([
     supabase.from('products').select('id,name,price,active'),
     supabase.from('purchases').select('id,product_id,granted_at'),
-    supabase.from('download_events').select('id',{count:'exact',head:true})
+    supabase.from('download_events').select('id',{count:'exact',head:true}),
+    supabase.from('orders').select('id,amount,status,created_at').eq('status','paid')
    ]);
-   if(pr.error||pu.error)return out(400,{error:'Analytics could not be loaded'});
-   const products=pr.data||[],purchases=pu.data||[],byId=new Map(products.map(x=>[String(x.id),x])),now=Date.now();
-   const stats=days=>{const since=now-days*86400000,rows=purchases.filter(x=>new Date(x.granted_at||0).getTime()>=since);return{sales:rows.length,revenue:rows.reduce((s,x)=>s+Number(byId.get(String(x.product_id))?.price||0),0)}};
+   if(pr.error||pu.error||ord.error)return out(400,{error:'Analytics could not be loaded'});
+   const products=pr.data||[],purchases=pu.data||[],orders=ord.data||[],byId=new Map(products.map(x=>[String(x.id),x])),now=Date.now();
+   const stats=days=>{const since=now-days*86400000,rows=purchases.filter(x=>new Date(x.granted_at||0).getTime()>=since),paid=orders.filter(x=>new Date(x.created_at||0).getTime()>=since);return{sales:rows.length,revenue:paid.reduce((s,x)=>s+Number(x.amount||0)/100,0)}};
    const counts={};for(const x of purchases)counts[x.product_id]=(counts[x.product_id]||0)+1;
    const best=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0],bestProduct=best?{name:byId.get(String(best[0]))?.name||'Unknown',sales:best[1]}:null;
    return out(200,{products:products.length,activeProducts:products.filter(x=>x.active).length,orders:purchases.length,downloads:d.count||0,today:stats(1),days7:stats(7),days30:stats(30),bestProduct});

@@ -24,7 +24,14 @@ exports.handler=async event=>{
   const {data:products,error:pe0}=await supabase.from('products').select('id,name,price,category_id,slug,thumbnail_path').in('id',ids);if(pe0||!products||products.length!==ids.length)return out(400,{error:'Order products could not be verified'});
   const {data:owned,error:oe}=await supabase.from('purchases').select('product_id').eq('user_id',user.id).in('product_id',ids);if(oe)return out(500,{error:'Could not verify existing purchases'});
   const have=new Set((owned||[]).map(x=>String(x.product_id))),missing=ids.filter(id=>!have.has(String(id)));
-  if(missing.length){const rows=missing.map(product_id=>({user_id:user.id,product_id}));const {error:pe}=await supabase.from('purchases').upsert(rows,{onConflict:'user_id,product_id',ignoreDuplicates:true});if(pe)return out(500,{error:'Payment verified but purchase access could not be granted'})}
+  let savedOrderId=null;
+  const {data:orderRow,error:orderSaveError}=await supabase.from('orders').upsert({user_id:user.id,email:user.email||'',amount:Number(order.amount),status:'paid',payment_provider:'razorpay',provider_order_id:order.id,provider_payment_id:payment.id},{onConflict:'provider_order_id'}).select('id').single();
+  if(orderSaveError)return out(500,{error:'Payment verified but order record could not be saved'});savedOrderId=orderRow.id;
+  const unitPrices=new Map((products||[]).map(p=>[String(p.id),Number(p.price||0)]));
+  const subtotalNote=Number(notes.subtotal||0),discountNote=Number(notes.discount||0),factor=subtotalNote>0?Math.max(0,(subtotalNote-discountNote)/subtotalNote):1;
+  const itemRows=ids.map(product_id=>({order_id:savedOrderId,product_id,price:Math.round((unitPrices.get(String(product_id))||0)*factor*100)}));
+  const {error:itemError}=await supabase.from('order_items').upsert(itemRows,{onConflict:'order_id,product_id'});if(itemError)return out(500,{error:'Payment verified but order items could not be saved'});
+  if(missing.length){const rows=missing.map(product_id=>({user_id:user.id,product_id,order_id:savedOrderId}));const {error:pe}=await supabase.from('purchases').upsert(rows,{onConflict:'user_id,product_id',ignoreDuplicates:true});if(pe)return out(500,{error:'Payment verified but purchase access could not be granted'})}
   let emailSent=false;
   try{
    if(process.env.RESEND_API_KEY&&user.email){
