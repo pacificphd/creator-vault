@@ -7,7 +7,15 @@
 @media(max-width:560px){.downloadRow{padding:11px 12px;gap:8px}.downloadRow b{font-size:13px}.downloadRow .btn{min-height:40px;padding:8px 12px;font-size:12px}button,.btn,.outline,.accountTop,.cart{min-height:44px}.field{font-size:16px;min-height:44px}.modal{padding:8px}.sheet{width:100%;border-radius:18px;padding:18px 14px}.accountGrid{grid-template-columns:1fr}.checkoutBox .field{width:100%}.adminTabs{display:flex;overflow-x:auto;gap:7px;padding-bottom:8px}.adminTabs .outline{white-space:nowrap;flex:0 0 auto}.adminTable{display:block;overflow-x:auto;white-space:nowrap}.adminForm{grid-template-columns:1fr!important}.sheet{max-height:92vh;overflow-y:auto}.cartPanel{width:100%;max-width:430px}.adminTable td,.adminTable th{padding:10px 8px}.adminTable button{min-height:38px}.cover{height:150px}.cover.hasThumb{height:150px;padding:0}.cover h3{font-size:18px}.info p{font-size:13px}.hero h1{font-size:30px}}
 .productDetailLayout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:start}.productGallery{display:grid;grid-template-columns:68px minmax(0,1fr);gap:10px;min-width:0}.galleryThumbs{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto}.galleryThumb{height:65px;width:65px;padding:3px;border:1px solid #ddd0bd;border-radius:8px;background:#fff;cursor:pointer;overflow:hidden}.galleryThumb.selected{border:2px solid #a77532}.galleryThumb img{width:100%;height:100%;object-fit:contain}.galleryVideoLabel{font-size:12px}.galleryMain{background:#f8f5ef;min-height:310px;display:flex;align-items:center;justify-content:center;border-radius:12px;overflow:hidden}.galleryMain iframe{width:100%;min-height:360px;border:0}.galleryMain img,.galleryMain video{width:100%;max-height:520px;object-fit:contain}.productInfo{min-width:0}@media(max-width:720px){.productDetailLayout{grid-template-columns:1fr}.productGallery{grid-template-columns:1fr}.galleryThumbs{order:2;flex-direction:row;max-height:none;overflow-x:auto}.galleryMain{order:1;min-height:220px}.galleryThumb{flex:none}}
 .heroVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border:0;background:#201e19}.hero.videoBanner:after{display:none}.hero.videoBanner>div{background:rgba(20,18,14,.55);padding:10px;border-radius:8px}
-</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script><script src="config.js"></script><script src="https://checkout.razorpay.com/v1/checkout.js"></script></head><body>
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script><script src="config.js"></script><script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- Meta Pixel: Creator Vault Website; use browser events only after successful checkout verification. -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','1086569913979439');
+fbq('track','PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1086569913979439&amp;ev=PageView&amp;noscript=1" alt=""></noscript>
+</head><body>
 <div class="top" id="offerBar">LAUNCH OFFER — Save up to 40% on selected creator assets</div>
 <div class="wrap"><nav class="nav"><div class="logo" onclick="location.href='/'" style="cursor:pointer" title="Creator Vault Home"><img src="assets/creator-vault-logo.webp" alt="Creator Vault"></div><div class="navlinks"><a href="#shop">Shop</a><a href="#shop" onclick="filterCategory('bundle')">Bundles</a><a href="#faq">FAQ</a><a id="navSupport" href="#" style="display:none" onclick="event.preventDefault();openWhatsAppSupport()">Support</a></div><div class="navSearch"><input id="siteSearch" type="search" placeholder="Search products, LUTs, presets, templates…" aria-label="Search products" oninput="searchProducts(this.value)" onkeydown="if(event.key==='Enter')searchProducts(this.value,true)"><button onclick="searchProducts(document.getElementById('siteSearch').value,true)" aria-label="Search">⌕</button></div><div class="navActions"><button class="accountTop" id="accountTop" onclick="openAccount()">Login / Account</button><div class="cart" onclick="openCart()">Cart <b id="count">0</b></div></div></nav>
 <section class="heroSlider"><div class="heroTrack" id="heroTrack"></div><button class="slideArrow prev" onclick="heroMove(-1)">‹</button><button class="slideArrow next" onclick="heroMove(1)">›</button><div class="dots"></div></section>
@@ -274,6 +282,17 @@ function openBannerTarget(term){if(term==='all'){filter('All');return}openProduc
    if(st)st.textContent='Verifying payment…';
    const vr=await fetch('/.netlify/functions/verify-payment',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({...p,productIds})});
    const v=await vr.json();if(!vr.ok){if(st)st.textContent=v.error||'Payment verification failed';return}
+   // Purchase fires only after the server has verified Razorpay payment and granted access.
+   // Deduplicate repeated checkout callbacks by payment ID in this browser session.
+   try{
+     const paymentId=String(v.paymentId||p.razorpay_payment_id||'');
+     const eventKey='cv-meta-purchase-'+paymentId;
+     if(paymentId&&sessionStorage.getItem(eventKey)!=='sent'&&typeof window.fbq==='function'){
+       const value=Number(o.amount||0)/100;
+       window.fbq('track','Purchase',{currency:'INR',value:Number(value.toFixed(2)),content_type:'product',num_items:productIds.length},{eventID:'cv-'+paymentId});
+       sessionStorage.setItem(eventKey,'sent');
+     }
+   }catch(pixelError){console.warn('Meta purchase event unavailable',pixelError)}
    cart=[];localStorage.setItem('cv-cart','[]');count();renderCart();closeCart();if(st)st.textContent='Payment successful.';
    showPurchaseSuccess();
   },modal:{ondismiss:function(){if(st)st.textContent='Payment cancelled. No purchase was granted.'}}});
